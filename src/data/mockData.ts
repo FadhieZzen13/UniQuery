@@ -1,0 +1,145 @@
+import { User, Question, Answer, CategoryItem } from "@/types";
+
+export const currentUser: User = {
+  id: "1",
+  name: "Sarah Johnson",
+  email: "sarah.johnson@university.edu",
+  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+  reputation: 1250,
+  joinedAt: new Date("2023-09-01"),
+};
+
+export const users: User[] = [
+  currentUser,
+  {
+    id: "2",
+    name: "Michael Chen",
+    email: "michael.chen@university.edu",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
+    reputation: 890,
+    joinedAt: new Date("2023-08-15"),
+  },
+  {
+    id: "3",
+    name: "Emily Davis",
+    email: "emily.davis@university.edu",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
+    reputation: 2100,
+    joinedAt: new Date("2022-09-01"),
+  },
+  {
+    id: "4",
+    name: "James Wilson",
+    email: "james.wilson@university.edu",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
+    reputation: 560,
+    joinedAt: new Date("2024-01-10"),
+  },
+];
+
+export const categories: CategoryItem[] = [
+  { id: "all", label: "All Questions", icon: "LayoutGrid" },
+  { id: "academic", label: "Academic", icon: "GraduationCap" },
+  { id: "administrative", label: "Administrative", icon: "FileText" },
+  { id: "hostel", label: "Hostel & Facilities", icon: "Building" },
+  { id: "student-life", label: "Student Life", icon: "Users" },
+];
+
+export const questions: Question[] = [
+  {
+    id: "1",
+    title: "How do I apply for thesis extension due to medical reasons?",
+    description: "I've been dealing with some health issues and need to extend my FYP deadline. What's the proper procedure and which forms do I need to fill out? Has anyone gone through this process before?",
+    category: "academic",
+    tags: ["FYP", "Extension", "Medical"],
+    author: users[1],
+    votes: 24,
+    answerCount: 5,
+    createdAt: new Date("2024-01-15T10:30:00"),
+    hasVerifiedAnswer: true,
+  },
+  {
+    id: "2",
+    title: "Bursary application deadline for Spring semester?",
+    description: "Does anyone know when the deadline is for applying for financial aid/bursary for the upcoming spring semester? I can't find the information on the portal.",
+    category: "administrative",
+    tags: ["Bursary", "Financial Aid", "Deadline"],
+    author: users[2],
+    votes: 18,
+    answerCount: 3,
+    createdAt: new Date("2024-01-14T14:20:00"),
+    hasVerifiedAnswer: true,
+  },
+  {
+    id: "3",
+    title: "WiFi issues in Block C dormitory - who to contact?",
+    description: "The WiFi in Block C has been extremely slow for the past week. I've already restarted my router multiple times. Who should I report this to? Is there an IT helpdesk specifically for residential issues?",
+    category: "hostel",
+    tags: ["WiFi", "IT Support", "Block C"],
+    author: users[3],
+    votes: 31,
+    answerCount: 7,
+    createdAt: new Date("2024-01-13T09:15:00"),
+  },
+  {
+    id: "4",
+    title: "Best study spots on campus during exam period?",
+    description: "Looking for quiet places to study during finals. The library gets super crowded. Are there any hidden gems or lesser-known spots that are good for focused studying?",
+    category: "student-life",
+    tags: ["Study", "Exams", "Campus"],
+    author: users[0],
+    votes: 45,
+    answerCount: 12,
+    createdAt: new Date("2024-01-12T16:45:00"),
+    hasVerifiedAnswer: true,
+  },
+  {
+    id: "5",
+    title: "Prerequisites for Advanced Machine Learning course?",
+    description: "I want to take CS401 Advanced Machine Learning next semester. The course catalog says 'strong programming background required.' What exactly does this mean? Do I need to complete CS201 first?",
+    category: "academic",
+    tags: ["CS401", "Prerequisites", "Machine Learning"],
+    author: users[1],
+    votes: 15,
+    answerCount: 4,
+    createdAt: new Date("2024-01-11T11:00:00"),
+  },
+  {
+    id: "6",
+    title: "How to get parking permit for night classes?",
+    description: "I have evening classes this semester and need a parking permit that's valid after 6pm. The regular student permit apparently doesn't cover evening parking. What's the process?",
+    category: "administrative",
+    tags: ["Parking", "Night Classes", "Permit"],
+    author: users[2],
+    votes: 9,
+    answerCount: 2,
+    createdAt: new Date("2024-01-10T18:30:00"),
+  },
+];
+
+export const answersForQuestion1: Answer[] = [
+  {
+    id: "a1",
+    content: "You need to submit a Medical Extension Request form (Form ACA-203) to the Student Affairs office. Make sure to attach your medical certificate from a registered healthcare provider. The form needs to be signed by your supervisor first. I went through this last semester - the process took about 2 weeks for approval.",
+    author: users[2],
+    votes: 18,
+    isVerified: true,
+    createdAt: new Date("2024-01-15T11:45:00"),
+  },
+  {
+    id: "a2",
+    content: "Adding to what Emily said - you can find Form ACA-203 on the student portal under 'Academic Forms'. Also, make sure to notify your thesis advisor via email before submitting the form. They'll receive a notification to approve your request.",
+    author: users[3],
+    votes: 12,
+    isVerified: false,
+    createdAt: new Date("2024-01-15T14:20:00"),
+  },
+  {
+    id: "a3",
+    content: "The deadline for extension requests is usually 2 weeks before your original submission date. Don't wait until the last minute! Also, the medical certificate should explicitly state that you were unable to work on academic assignments during the period.",
+    author: users[0],
+    votes: 8,
+    isVerified: false,
+    createdAt: new Date("2024-01-15T16:00:00"),
+  },
+];
