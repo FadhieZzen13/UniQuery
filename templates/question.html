@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question - UniQuery</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="/" class="logo">UniQuery</a>
+            </div>
+            
+            <div class="nav-center">
+                <div class="search-bar">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" placeholder="Search questions...">
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <button class="btn btn-primary" onclick="window.location.href='/'">Ask Question</button>
+                <div class="user-info">
+                    <div class="reputation-badge">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 0l2.4 4.8 5.6.8-4 3.9.9 5.5L8 12.8 3.1 15l.9-5.5-4-3.9 5.6-.8L8 0z" fill="currentColor"/>
+                        </svg>
+                        <span>156</span>
+                    </div>
+                    <div class="user-avatar">
+                        <span>JD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="question-detail-layout">
+        <aside class="sidebar-mini">
+            <a href="/" class="back-link">← Back to Questions</a>
+        </aside>
+        
+        <main class="question-detail-content">
+            <!-- Question Section -->
+            <article class="question-full" id="questionDetail">
+                <div class="vote-section">
+                    <button class="vote-btn vote-up" data-id="1">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 4l8 8H4l8-8z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <span class="vote-count">24</span>
+                    <button class="vote-btn vote-down" data-id="1">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 20l-8-8h16l-8 8z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="question-content">
+                    <h1 class="question-title">How do I apply for bursary at our university?</h1>
+                    
+                    <div class="question-meta">
+                        <span class="author">Asked by <strong>Sarah Johnson</strong></span>
+                        <span class="timestamp">2 hours ago</span>
+                        <span class="views">156 views</span>
+                    </div>
+                    
+                    <div class="question-body">
+                        <p>I'm a first-year student and I'm trying to understand the bursary application process. I've heard that there are different types of bursaries available, but I'm not sure which ones I might qualify for or how to apply.</p>
+                        <p>Specifically, I'd like to know:</p>
+                        <ul>
+                            <li>What are the eligibility requirements?</li>
+                            <li>When is the application deadline?</li>
+                            <li>What documents do I need to submit?</li>
+                            <li>Where can I find the application form?</li>
+                        </ul>
+                        <p>Any guidance would be greatly appreciated!</p>
+                    </div>
+                    
+                    <div class="question-tags">
+                        <span class="tag">#Bursary</span>
+                        <span class="tag">#Financial-Aid</span>
+                        <span class="tag">#FYP</span>
+                    </div>
+                </div>
+            </article>
+            
+            <!-- Answers Section -->
+            <section class="answers-section">
+                <div class="answers-header">
+                    <h2>3 Answers</h2>
+                    <select class="sort-select">
+                        <option>Highest Score</option>
+                        <option>Most Recent</option>
+                        <option>Oldest</option>
+                    </select>
+                </div>
+                
+                <div class="answers-list" id="answersList">
+                    <!-- Answer 1 - Verified -->
+                    <article class="answer verified-answer">
+                        <div class="vote-section">
+                            <button class="vote-btn vote-up">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 4l8 8H4l8-8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <span class="vote-count">18</span>
+                            <button class="vote-btn vote-down">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 20l-8-8h16l-8 8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="answer-content">
+                            <div class="verified-badge">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <span>Verified Answer</span>
+                            </div>
+                            
+                            <div class="answer-body">
+                                <p>The bursary application process is actually quite straightforward once you know where to look. Here's a comprehensive guide:</p>
+                                
+                                <p><strong>Eligibility Requirements:</strong></p>
+                                <ul>
+                                    <li>Must be a registered student</li>
+                                    <li>Household income below R350,000 per annum</li>
+                                    <li>Minimum academic average of 60%</li>
+                                </ul>
+                                
+                                <p><strong>Application Deadline:</strong> March 31st for the upcoming academic year</p>
+                                
+                                <p><strong>Required Documents:</strong></p>
+                                <ul>
+                                    <li>Certified ID copy</li>
+                                    <li>Proof of income (payslips or affidavit)</li>
+                                    <li>Academic transcript</li>
+                                    <li>Proof of residence</li>
+                                </ul>
+                                
+                                <p><strong>Application Form:</strong> You can download it from the student portal under Financial Aid section, or visit the Bursary Office in Building C, Room 204.</p>
+                                
+                                <p>Good luck with your application!</p>
+                            </div>
+                            
+                            <div class="answer-footer">
+                                <div class="answer-meta">
+                                    <span class="author">
+                                        <div class="author-avatar">AF</div>
+                                        <strong>Admin - Financial Aid</strong>
+                                    </span>
+                                    <span class="timestamp">1 hour ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                    
+                    <!-- Answer 2 -->
+                    <article class="answer">
+                        <div class="vote-section">
+                            <button class="vote-btn vote-up">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 4l8 8H4l8-8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <span class="vote-count">7</span>
+                            <button class="vote-btn vote-down">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 20l-8-8h16l-8 8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="answer-content">
+                            <div class="answer-body">
+                                <p>I just went through this process last semester! In addition to what was mentioned, I'd recommend:</p>
+                                <ul>
+                                    <li>Start early - don't wait until the last minute</li>
+                                    <li>Make sure all documents are certified within the last 3 months</li>
+                                    <li>Keep copies of everything you submit</li>
+                                    <li>Follow up after 2 weeks if you haven't heard back</li>
+                                </ul>
+                                <p>The staff at the Bursary Office are really helpful, so don't hesitate to ask questions!</p>
+                            </div>
+                            
+                            <div class="answer-footer">
+                                <div class="answer-meta">
+                                    <span class="author">
+                                        <div class="author-avatar">MK</div>
+                                        <strong>Mike Khan</strong>
+                                    </span>
+                                    <span class="timestamp">45 minutes ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                    
+                    <!-- Answer 3 -->
+                    <article class="answer">
+                        <div class="vote-section">
+                            <button class="vote-btn vote-up">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 4l8 8H4l8-8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <span class="vote-count">3</span>
+                            <button class="vote-btn vote-down">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 20l-8-8h16l-8 8z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="answer-content">
+                            <div class="answer-body">
+                                <p>Also check if your province has specific bursary programs! Some provinces offer additional funding for students studying certain fields like engineering or teaching.</p>
+                            </div>
+                            
+                            <div class="answer-footer">
+                                <div class="answer-meta">
+                                    <span class="author">
+                                        <div class="author-avatar">LP</div>
+                                        <strong>Linda Peters</strong>
+                                    </span>
+                                    <span class="timestamp">30 minutes ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+            
+            <!-- Post Answer Section -->
+            <section class="post-answer-section">
+                <h3>Your Answer</h3>
+                <form class="answer-form" id="answerForm">
+                    <textarea 
+                        id="answerBody" 
+                        name="answer" 
+                        rows="8"
+                        placeholder="Write your answer here... Be clear and provide helpful details."
+                        required
+                    ></textarea>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Post Answer</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+    
+    <script src="/static/js/question.js"></script>
+</body>
+</html>

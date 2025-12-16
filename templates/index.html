@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - UniQuery</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="home.html" class="logo">UniQuery</a>
+            </div>
+            
+            <div class="nav-center">
+                <div class="search-bar">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" placeholder="Search questions..." id="searchInput">
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <button class="btn btn-primary" id="askQuestionBtn">Ask Question</button>
+                <div class="user-info">
+                    <div class="reputation-badge">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 0l2.4 4.8 5.6.8-4 3.9.9 5.5L8 12.8 3.1 15l.9-5.5-4-3.9 5.6-.8L8 0z" fill="currentColor"/>
+                        </svg>
+                        <span>156</span>
+                    </div>
+                    <div class="user-avatar" id="userAvatar">
+                        <span>JD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <h3>Categories</h3>
+                <ul class="category-list">
+                    <li class="category-item active" data-category="all">
+                        <span class="category-icon">🏠</span>
+                        <span>All Questions</span>
+                    </li>
+                    <li class="category-item" data-category="academic">
+                        <span class="category-icon">📚</span>
+                        <span>Academic</span>
+                    </li>
+                    <li class="category-item" data-category="administrative">
+                        <span class="category-icon">🏛️</span>
+                        <span>Administrative</span>
+                    </li>
+                    <li class="category-item" data-category="hostel">
+                        <span class="category-icon">🏠</span>
+                        <span>Hostel/Facilities</span>
+                    </li>
+                    <li class="category-item" data-category="student-life">
+                        <span class="category-icon">🎉</span>
+                        <span>Student Life</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Quick Links</h3>
+                <ul class="link-list">
+                    <li><a href="#">My Questions</a></li>
+                    <li><a href="#">My Answers</a></li>
+                    <li><a href="#">Saved</a></li>
+                </ul>
+            </div>
+        </aside>
+        
+        <!-- Main Feed -->
+        <main class="main-content">
+            <div class="feed-header">
+                <h1>All Questions</h1>
+                <div class="filter-tabs">
+                    <button class="tab active">Recent</button>
+                    <button class="tab">Popular</button>
+                    <button class="tab">Unanswered</button>
+                </div>
+            </div>
+            
+            <div class="questions-feed" id="questionsFeed">
+                <!-- Question cards will be inserted here by JavaScript -->
+            </div>
+        </main>
+    </div>
+    
+    <!-- Ask Question Modal -->
+    <div class="modal" id="askQuestionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ask a Question</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            
+            <form class="question-form" id="questionForm">
+                <div class="form-group">
+                    <label for="questionTitle">Question Title</label>
+                    <input 
+                        type="text" 
+                        id="questionTitle" 
+                        name="title" 
+                        placeholder="What's your question? Be specific."
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="questionBody">Detailed Description</label>
+                    <textarea 
+                        id="questionBody" 
+                        name="body" 
+                        rows="8"
+                        placeholder="Provide all the details about your question..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="questionCategory">Category</label>
+                    <select id="questionCategory" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="academic">Academic</option>
+                        <option value="administrative">Administrative</option>
+                        <option value="hostel">Hostel/Facilities</option>
+                        <option value="student-life">Student Life</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="questionTags">Tags</label>
+                    <input 
+                        type="text" 
+                        id="questionTags" 
+                        name="tags" 
+                        placeholder="e.g., FYP, Bursary, Housing (comma separated)"
+                    >
+                    <small>Add up to 5 tags to help others find your question</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Post Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
