@@ -10,22 +10,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categories } from "@/data/mockData";
 import { Category } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { questionsApi } from "@/lib/api";
+
+const categories = [
+  { id: "academic", label: "Academic" },
+  { id: "administrative", label: "Administrative" },
+  { id: "hostel", label: "Hostel & Facilities" },
+  { id: "student-life", label: "Student Life" },
+];
 
 interface AskQuestionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuestionCreated?: () => void;
 }
 
-const AskQuestionModal = ({ isOpen, onClose }: AskQuestionModalProps) => {
+const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("academic");
   const [tags, setTags] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim() || !description.trim()) {
@@ -37,16 +46,42 @@ const AskQuestionModal = ({ isOpen, onClose }: AskQuestionModalProps) => {
       return;
     }
 
-    toast({
-      title: "Question posted!",
-      description: "Your question has been submitted successfully.",
-    });
-    
-    setTitle("");
-    setDescription("");
-    setCategory("academic");
-    setTags("");
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      // Parse tags from comma-separated string
+      const tagArray = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
+      await questionsApi.create({
+        title,
+        description,
+        category,
+        tags: tagArray,
+      });
+
+      toast({
+        title: "Question posted!",
+        description: "Your question has been submitted successfully.",
+      });
+      
+      setTitle("");
+      setDescription("");
+      setCategory("academic");
+      setTags("");
+      onClose();
+      onQuestionCreated?.();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to post question",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -105,7 +140,7 @@ const AskQuestionModal = ({ isOpen, onClose }: AskQuestionModalProps) => {
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                {categories.filter(c => c.id !== 'all').map((cat) => (
+                {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.label}
                   </SelectItem>
@@ -127,11 +162,11 @@ const AskQuestionModal = ({ isOpen, onClose }: AskQuestionModalProps) => {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Post Question
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? "Posting..." : "Post Question"}
             </Button>
           </div>
         </form>

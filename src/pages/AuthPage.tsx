@@ -4,14 +4,17 @@ import { GraduationCap, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const universityEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/;
@@ -27,7 +30,7 @@ const AuthPage = () => {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateEmail(email)) return;
@@ -41,12 +44,41 @@ const AuthPage = () => {
       return;
     }
 
-    toast({
-      title: isLogin ? "Welcome back!" : "Account created!",
-      description: "Redirecting to dashboard...",
-    });
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
     
-    setTimeout(() => navigate("/dashboard"), 1000);
+    try {
+      if (isLogin) {
+        await login(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "Redirecting to dashboard...",
+        });
+      } else {
+        await register(email, password);
+        toast({
+          title: "Account created!",
+          description: "Let's set up your profile...",
+        });
+      }
+      // Navigation is handled by the AuthRoute wrapper
+    } catch (error) {
+      toast({
+        title: isLogin ? "Login failed" : "Registration failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -142,8 +174,13 @@ const AuthPage = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full">
-              {isLogin ? "Login with Student Mail" : "Create Account"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading 
+                ? "Please wait..." 
+                : isLogin 
+                  ? "Login with Student Mail" 
+                  : "Create Account"
+              }
             </Button>
           </form>
 
