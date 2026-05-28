@@ -17,13 +17,12 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
-    const universityEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/;
     if (!email) {
       setEmailError("");
       return true;
     }
-    if (!universityEmailRegex.test(email)) {
-      setEmailError("Please use your university email (.edu)");
+    if (!email.toLowerCase().includes(".edu")) {
+      setEmailError("Please use a .edu email address");
       return false;
     }
     setEmailError("");
