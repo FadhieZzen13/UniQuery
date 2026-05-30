@@ -128,8 +128,10 @@ const QuestionDetail = () => {
   };
 
   const handleVerifyAnswer = async (answerId: string) => {
+    if (!id) return;
+
     try {
-      await answersApi.verify(answerId);
+      await answersApi.accept(id, answerId);
       // Refresh answers to show updated verification status
       const answersData = await answersApi.getForQuestion(id!);
       setAnswers(answersData);
@@ -233,7 +235,7 @@ const QuestionDetail = () => {
   const userAvatarUrl = user?.avatar || 
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'User'}`;
 
-  const isQuestionAuthor = user && question.author.id === user.id.toString();
+  const isQuestionAuthor = user && question.author.id != null && question.author.id === user.id;
 
   return (
     <div className="min-h-screen bg-background">

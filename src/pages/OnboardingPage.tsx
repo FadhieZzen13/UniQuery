@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, User, BookOpen, Calendar, ArrowRight } from "lucide-react";
+import { GraduationCap, User, BookOpen, Calendar, ArrowRight, School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { coursesApi } from "@/lib/api";
 
 const majors = [
   "Computer Science",
@@ -58,14 +59,51 @@ const years = [
   "Alumni",
 ];
 
+interface Course {
+  id: string;
+  code: string;
+  title: string;
+}
+
+const TOTAL_STEPS = 4;
+
 const OnboardingPage = () => {
   const navigate = useNavigate();
   const { completeOnboarding, user } = useAuth();
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
-  const [major, setMajor] = useState("");
-  const [year, setYear] = useState("");
+  const courseOnly = Boolean(user?.onboardingCompleted && user?.needsCourseEnrollment);
+  const [step, setStep] = useState(courseOnly ? 4 : 1);
+  const [name, setName] = useState(user?.name ?? "");
+  const [major, setMajor] = useState(user?.major ?? "");
+  const [year, setYear] = useState(user?.year ?? "");
+  const [courseId, setCourseId] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (step !== 4) return;
+
+    const loadCourses = async () => {
+      setCoursesLoading(true);
+      try {
+        const available = await coursesApi.getAvailable();
+        setCourses(available);
+        if (available.length === 1) {
+          setCourseId(available[0].id);
+        }
+      } catch (error) {
+        toast({
+          title: "Could not load courses",
+          description: error instanceof Error ? error.message : "Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setCoursesLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, [step]);
 
   const handleNext = () => {
     if (step === 1 && !name.trim()) {
@@ -84,11 +122,7 @@ const OnboardingPage = () => {
       });
       return;
     }
-    setStep(step + 1);
-  };
-
-  const handleComplete = async () => {
-    if (!year) {
+    if (step === 3 && !year) {
       toast({
         title: "Year required",
         description: "Please select your current year.",
@@ -96,13 +130,30 @@ const OnboardingPage = () => {
       });
       return;
     }
+    setStep(step + 1);
+  };
+
+  const handleComplete = async () => {
+    if (!courseId) {
+      toast({
+        title: "Course required",
+        description: "Please select a course to join.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await completeOnboarding(name, major, year);
+      await completeOnboarding(
+        name.trim() || user?.name || "Student",
+        major || user?.major || "Other",
+        year || user?.year || "1st Year",
+        courseId
+      );
       toast({
         title: "Welcome to UniQuery!",
-        description: "Your profile has been set up successfully.",
+        description: "Your profile has been set up and you've joined your course.",
       });
       navigate("/dashboard");
     } catch (error) {
@@ -116,10 +167,11 @@ const OnboardingPage = () => {
     }
   };
 
+  const selectedCourse = courses.find((c) => c.id === courseId);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
@@ -130,23 +182,23 @@ const OnboardingPage = () => {
           <p className="text-muted-foreground mt-1">Let's get to know you better</p>
         </div>
 
-        {/* Progress indicators */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
-            <div
-              key={s}
-              className={`h-2 rounded-full transition-all ${
-                s === step
-                  ? "w-8 bg-primary"
-                  : s < step
-                  ? "w-4 bg-primary/60"
-                  : "w-4 bg-muted"
-              }`}
-            />
-          ))}
-        </div>
+        {!courseOnly && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
+              <div
+                key={s}
+                className={`h-2 rounded-full transition-all ${
+                  s === step
+                    ? "w-8 bg-primary"
+                    : s < step
+                    ? "w-4 bg-primary/60"
+                    : "w-4 bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Form Card */}
         <div className="bg-card rounded-xl shadow-lg border border-border p-6 animate-fade-in">
           {step === 1 && (
             <div className="space-y-4">
@@ -235,10 +287,57 @@ const OnboardingPage = () => {
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
                   Back
                 </Button>
-                <Button 
-                  onClick={handleComplete} 
+                <Button onClick={handleNext} className="flex-1">
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary">
+                  <School className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-foreground">Join a course</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Pick the course where you'll ask and answer questions
+                  </p>
+                </div>
+              </div>
+
+              {coursesLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Loading courses...</p>
+              ) : courses.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  No courses are available yet. Ask your administrator to add one.
+                </p>
+              ) : (
+                <Select value={courseId} onValueChange={setCourseId}>
+                  <SelectTrigger className="text-lg py-6">
+                    <SelectValue placeholder="Select your course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.code} — {course.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                  Back
+                </Button>
+                <Button
+                  onClick={handleComplete}
                   className="flex-1"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || coursesLoading || courses.length === 0}
                 >
                   {isSubmitting ? "Setting up..." : "Complete Setup"}
                 </Button>
@@ -247,8 +346,7 @@ const OnboardingPage = () => {
           )}
         </div>
 
-        {/* Summary preview */}
-        {(name || major || year) && (
+        {(name || major || year || selectedCourse) && (
           <div className="mt-6 p-4 bg-muted/50 rounded-lg animate-fade-in">
             <p className="text-sm text-muted-foreground mb-2">Your Profile Preview</p>
             <div className="flex items-center gap-3">
@@ -260,6 +358,11 @@ const OnboardingPage = () => {
                 <p className="text-sm text-muted-foreground">
                   {[major, year].filter(Boolean).join(" • ") || "Major • Year"}
                 </p>
+                {selectedCourse && (
+                  <p className="text-sm text-primary mt-0.5">
+                    {selectedCourse.code} — {selectedCourse.title}
+                  </p>
+                )}
               </div>
             </div>
           </div>

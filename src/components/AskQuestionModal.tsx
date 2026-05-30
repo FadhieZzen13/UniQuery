@@ -37,10 +37,22 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !description.trim()) {
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedTitle || !trimmedDescription) {
       toast({
         title: "Missing information",
         description: "Please fill in the title and description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (trimmedTitle.length < 3 || trimmedDescription.length < 3) {
+      toast({
+        title: "Too short",
+        description: "Title and description must each be at least 3 characters.",
         variant: "destructive",
       });
       return;
@@ -56,8 +68,8 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
         .filter((t) => t.length > 0);
 
       await questionsApi.create({
-        title,
-        description,
+        title: trimmedTitle,
+        description: trimmedDescription,
         category,
         tags: tagArray,
       });

@@ -1,0 +1,150 @@
+================================================================================
+CHANGES SINCE LAST GIT PUSH
+================================================================================
+Repository : campus-connect-main
+Branch     : dev
+Last push  : commit 1fabb90c355959de0e962440d44d45deb467e972
+             "feat: integrate Supabase for authentication and user management"
+Remote     : origin/dev (same commit as local HEAD — no unpushed commits)
+Status     : All items below are UNCOMMITTED local changes (working tree)
+Generated  : 2026-05-30
+================================================================================
+
+SUMMARY
+-------
+Bug fixes and feature work from local development / AI-assisted session:
+- Fixed auth, onboarding, and user profile API (v1 database schema)
+- Fixed question posting validation and error messages
+- Fixed voting (toggle up/down instead of 409 conflicts)
+- Fixed "Mark as Answer" for question authors
+- Added course enrollment to onboarding (fixes "No course enrollment found")
+- Improved API error messages on the frontend
+
+================================================================================
+FILES CHANGED (10 files)
+================================================================================
+
+BACKEND (3 files)
+-----------------
+server/src/routes/users.ts
+server/src/routes/v1.ts
+server/src/routes/v1-qa.ts
+
+FRONTEND (7 files)
+------------------
+src/lib/api.ts
+src/contexts/AuthContext.tsx
+src/App.tsx
+src/pages/OnboardingPage.tsx
+src/pages/QuestionDetail.tsx
+src/components/AskQuestionModal.tsx
+src/components/VoteCounter.tsx
+
+================================================================================
+DETAILED CHANGES BY AREA
+================================================================================
+
+1. USER PROFILE & ONBOARDING (server/src/routes/users.ts)
+   - Replaced broken import `authenticateToken` (did not exist) with `authenticate`
+   - Migrated user routes from legacy columns (email, name, major, year) to v1 schema:
+     * full_name, display_name (major|year encoded in display_name)
+   - POST /api/users/onboarding now:
+     * Requires courseId
+     * Creates enrollment (STUDENT role) in a transaction
+     * Supports course-only completion for users who already have a profile
+   - GET /api/users/me returns needsCourseEnrollment flag
+   - Profile update route aligned with v1 schema
+
+2. AUTH & COURSES (server/src/routes/v1.ts)
+   - On register: auto-enroll new user in first ACTIVE course for their institution
+   - GET /api/v1/courses/available — lists active courses for user's institution
+   - ensureDefaultCourses() — creates "CAMPUS - Campus Connect General" if none exist
+
+3. Q&A API (server/src/routes/v1-qa.ts)
+   - Question creation validation:
+     * Accepts `description` as alias for `body`
+     * Trims fields; clearer validation error messages
+     * Handles tags as array or comma-separated string
+   - Voting POST /api/v1/votes:
+     * Toggle behavior: same vote removes, opposite vote updates (no more 409)
+     * Returns { value: newValue } including 0 when vote removed
+   - Accept answer PATCH .../accept-answer/:answerId:
+     * Sets is_accepted AND is_verified (was only is_accepted; UI uses is_verified)
+
+4. API CLIENT (src/lib/api.ts)
+   - formatApiError() — surfaces Zod/field errors in toasts
+   - questionsApi.create — trims title and body before send
+   - answersApi.accept(questionId, answerId) — new method for OP accept flow
+   - usersApi.completeOnboarding — sends courseId
+   - coursesApi.getAvailable() — fetch courses for onboarding
+
+5. AUTH CONTEXT (src/contexts/AuthContext.tsx)
+   - normalizeAuthUser() — consistent User shape from API
+   - loadSessionUser() — prefers /users/me over /v1/me
+   - User type: needsCourseEnrollment optional field
+   - completeOnboarding(name, major, year, courseId)
+
+6. ROUTING (src/App.tsx)
+   - Protected routes redirect to /onboarding if needsCourseEnrollment
+   - Onboarding route allows return visit for course-only enrollment
+
+7. ONBOARDING UI (src/pages/OnboardingPage.tsx)
+   - 4-step flow: Name → Major → Year → Join a course
+   - Loads courses from GET /v1/courses/available on step 4
+   - Course-only mode for users with profile but no enrollment
+   - Profile preview shows selected course
+
+8. QUESTION DETAIL (src/pages/QuestionDetail.tsx)
+   - "Mark as Answer" uses answersApi.accept() instead of faculty-only verify()
+   - Fixed author ID comparison (UUID string, no erroneous toString())
+
+9. ASK QUESTION MODAL (src/components/AskQuestionModal.tsx)
+   - Client-side validation: title and description min 3 characters
+   - Trims input before submit
+
+10. VOTE COUNTER (src/components/VoteCounter.tsx)
+    - Fixed own-content check (user.id === authorId)
+
+================================================================================
+BUGS FIXED
+================================================================================
+[CRITICAL] Server could fail to load users routes (authenticateToken missing)
+[CRITICAL] Onboarding failed against real PostgreSQL schema
+[CRITICAL] Posting questions failed: "No course enrollment found"
+[HIGH]     Posting questions failed: "Invalid request" (short title/body, body alias)
+[HIGH]     Voting failed on second click: "Already voted" (409)
+[HIGH]     Question author "Mark as Answer" returned 403 (wrong endpoint/role)
+[MEDIUM]   Generic API errors hid validation details in UI
+[LOW]      Author ID comparison inconsistencies in vote/resolve UI
+
+================================================================================
+API ENDPOINTS ADDED OR CHANGED
+================================================================================
+NEW:
+  GET  /api/v1/courses/available     — list courses for onboarding (auth required)
+
+CHANGED:
+  POST /api/users/onboarding         — +courseId, creates enrollment
+  GET  /api/users/me                 — +needsCourseEnrollment
+  POST /api/v1/questions             — improved validation
+  POST /api/v1/votes                 — toggle instead of insert-only
+  PATCH /api/v1/questions/:id/accept-answer/:answerId — also sets is_verified
+
+================================================================================
+NOT IN THIS CHANGESET (known remaining issues)
+================================================================================
+- Legacy routes still mounted (/api/questions, /api/answers, /api/votes) use old
+  schema and are incompatible with the v1 database; frontend uses /api/v1/*
+- Forgot password link is still a placeholder
+- Faculty verify endpoint (PUT /v1/answers/:id/verify) unchanged; separate from OP accept
+
+================================================================================
+TO COMMIT THESE CHANGES
+================================================================================
+  git add -A
+  git commit -m "fix: onboarding enrollment, voting, Q&A validation, and user API"
+  git push origin dev
+
+================================================================================
+END OF CHANGELOG
+================================================================================

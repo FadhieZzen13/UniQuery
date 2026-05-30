@@ -1,6 +1,6 @@
 import express from 'express';
 import { pool } from '../index.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js'; // Fixed import name
 
 const router = express.Router();
 
@@ -149,7 +149,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new question
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   const { title, description, category, tags } = req.body;
 
   if (!title || !description || !category) {
@@ -160,10 +160,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     // Start transaction
     await pool.query('BEGIN');
 
-    // Insert question
+    // Insert question - updated req.userId path
     const questionResult = await pool.query(
       'INSERT INTO questions (user_id, title, description, category) VALUES ($1, $2, $3, $4) RETURNING id',
-      [req.userId, title, description, category]
+      [req.auth?.userId, title, description, category]
     );
     const questionId = questionResult.rows[0].id;
 
@@ -226,7 +226,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Delete a question (only by author)
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -237,7 +237,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Question not found' });
     }
 
-    if (question.rows[0].user_id !== req.userId) {
+    // Updated req.userId path
+    if (question.rows[0].user_id !== req.auth?.userId) {
       return res.status(403).json({ error: 'Not authorized to delete this question' });
     }
 
@@ -250,7 +251,7 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Mark question as resolved (only by author)
-router.put('/:id/resolve', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/:id/resolve', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -261,7 +262,8 @@ router.put('/:id/resolve', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Question not found' });
     }
 
-    if (question.rows[0].user_id !== req.userId) {
+    // Updated req.userId path
+    if (question.rows[0].user_id !== req.auth?.userId) {
       return res.status(403).json({ error: 'Only the question author can mark it as resolved' });
     }
 

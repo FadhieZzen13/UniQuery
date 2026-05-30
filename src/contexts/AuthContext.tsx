@@ -10,6 +10,7 @@ export interface User {
   avatar: string | null;
   reputation: number;
   onboardingCompleted: boolean;
+  needsCourseEnrollment?: boolean;
   createdAt: string;
 }
 
@@ -21,7 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  completeOnboarding: (name: string, major: string, year: string) => Promise<void>;
+  completeOnboarding: (name: string, major: string, year: string, courseId: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   refreshUser: () => Promise<void>;
 }
@@ -40,6 +41,36 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const defaultUserFields = {
+  major: null,
+  year: null,
+  avatar: null,
+  reputation: 0,
+  createdAt: new Date().toISOString(),
+};
+
+const normalizeAuthUser = (apiUser: Record<string, unknown>): User => ({
+  id: String(apiUser.id),
+  email: String(apiUser.email ?? ''),
+  name: (apiUser.name as string | null) ?? null,
+  major: (apiUser.major as string | null) ?? null,
+  year: (apiUser.year as string | null) ?? null,
+  avatar: (apiUser.avatar as string | null) ?? null,
+  reputation: Number(apiUser.reputation ?? 0),
+  onboardingCompleted: Boolean(apiUser.onboardingCompleted),
+  needsCourseEnrollment: Boolean(apiUser.needsCourseEnrollment),
+  createdAt: String(apiUser.createdAt ?? new Date().toISOString()),
+});
+
+const loadSessionUser = async (): Promise<User> => {
+  try {
+    return await usersApi.getCurrentUser();
+  } catch {
+    const response = await authApi.verify();
+    return normalizeAuthUser({ ...defaultUserFields, ...response.user });
+  }
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -51,8 +82,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const savedToken = localStorage.getItem('token');
       if (savedToken) {
         try {
-          const response = await authApi.verify();
-          setUser(response.user);
+          const sessionUser = await loadSessionUser();
+          setUser(sessionUser);
           setToken(savedToken);
         } catch (error) {
           console.error('Token verification failed:', error);
@@ -71,14 +102,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const response = await authApi.login(email, password);
     localStorage.setItem('token', response.token);
     setToken(response.token);
-    setUser(response.user);
+    setUser(normalizeAuthUser({ ...defaultUserFields, ...response.user }));
   };
 
   const register = async (email: string, password: string) => {
     const response = await authApi.register(email, password);
     localStorage.setItem('token', response.token);
     setToken(response.token);
-    setUser(response.user);
+    setUser(normalizeAuthUser({ ...defaultUserFields, ...response.user }));
   };
 
   const logout = () => {
@@ -87,12 +118,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const completeOnboarding = async (name: string, major: string, year: string) => {
-    const updatedUser = await usersApi.completeOnboarding(name, major, year);
-    setUser({
-      ...updatedUser,
-      onboardingCompleted: true
-    });
+  const completeOnboarding = async (name: string, major: string, year: string, courseId: string) => {
+    const updatedUser = await usersApi.completeOnboarding(name, major, year, courseId);
+    setUser(updatedUser);
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -104,8 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async () => {
     if (token) {
       try {
-        const response = await authApi.verify();
-        setUser(response.user);
+        const sessionUser = await loadSessionUser();
+        setUser(sessionUser);
       } catch (error) {
         console.error('Failed to refresh user:', error);
       }
