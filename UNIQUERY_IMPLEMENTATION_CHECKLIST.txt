@@ -1,0 +1,340 @@
+================================================================================
+UniQuery — Systems Construction Brief
+IMPLEMENTATION CHECKLIST (vs. codebase audit)
+================================================================================
+Project    : campus-connect-main (UniQuery)
+Branch     : dev @ 1fabb90 (last push) + uncommitted local fixes
+Audited    : 2026-05-30
+Legend     : [x] Done  [~] Partial  [ ] Not done  [?] Unverified / env-dependent
+================================================================================
+
+HOW TO READ THIS
+----------------
+Each line maps to a requirement in Karthik's construction brief (Tasks 1–10).
+"Partial" means code exists but does not fully meet the Definition of Done or
+differs from the brief (called out in Notes).
+
+================================================================================
+SPRINT ROADMAP (high level)
+================================================================================
+Sprint 1 (W7–8)  Schema, Auth, RBAC, Anonymity MVP     [~] Mostly built; gaps below
+Sprint 2 (W9–10) Q&A, Moderation, Notifications         [~] Core APIs exist; UI/tests partial
+Sprint 3 (W11)   Knowledge Repository, SSO              [~] Archive API yes; SSO no
+Sprint 4 (W11–12) Performance tuning                    [~] Tooling only; P95 not proven
+
+Alpha MVP (W9)   Anonymous POST /questions E2E           [~] Possible if DB + keys configured
+UAT >80% (W14)                                      [ ] Not evidenced in repo
+
+================================================================================
+TASK 1: PostgreSQL schema deployment with versioned migrations
+================================================================================
+Priority: Critical | Sprint 1 · Week 7
+
+[x] PostgreSQL schema defined (supabase/migrations/*.sql)
+    - 20260529_init.sql — core 17+ tables, CHECKs, FKs, indexes, hot_score trigger
+    - 20260529_phase3.sql — auto-hide on flags trigger
+    - 20260529_phase4.sql — archive partitions + RLS on archive tables
+    - 20260529_phase4b.sql — UI compatibility columns (reputation, category, is_resolved)
+    - 20260529_perf.sql — pg_stat_statements extension
+
+[x] Entities present (institutions, faculties, users, sessions, courses, enrollments,
+    tags, questions, answers, votes, bookmarks, question_tags, identity_markers,
+    flags, moderation_audit_log, notifications, analytics_snapshots, subscriptions)
+
+[x] Key indexes: GIN body_tsv, (course_id, hot_score), votes/flags composites
+
+[x] RLS on identity_markers — moderation_role SELECT policy (init migration)
+
+[x] Hot score trigger on votes INSERT/DELETE (recompute_question_hot_score)
+
+[~] Migration framework
+    - Uses custom runner: server/scripts/run-migrations.ts
+    - npm run migrate replays ALL .sql files (no version table / no Knex·Prisma)
+    - Re-running on non-idempotent statements may fail; not true versioned migrations
+
+[ ] Knex.js or Prisma (brief specifies one of these)
+
+[ ] application_role vs moderation_role split (brief: separate DB roles for RLS)
+    - moderation_role creation attempted; application_role not in migrations
+    - App typically uses single DATABASE_URL connection
+
+[ ] Verified staging deploy + constraint failure tests documented
+
+[ ] Every SDD appendix constraint copied verbatim (schema is "best-effort" per migration comment)
+
+Definition of Done — Task 1
+[x] Tables exist (when migrations run)
+[~] CHECK / FK / indexes largely present
+[~] RLS on IDENTITY_MARKERS defined (runtime verification depends on DB roles)
+[~] npm run migrate reproduces schema (no migration history tracking)
+
+================================================================================
+TASK 2: Authentication endpoints — bcrypt fallback path
+================================================================================
+Priority: Critical | Sprint 1 · Week 7–8
+
+[x] POST /api/v1/auth/register — bcrypt cost 12, Zod validation, .edu email rule
+[~] Register is OPEN to clients (brief: admin-only or local-only) — not role-gated
+[x] pdpa_consent_at default now() on users table (DB default)
+[x] POST /api/v1/auth/login — lookup, bcrypt compare, failed_login_count, lockout
+[x] 5-strike lockout → locked_until +15 minutes (HTTP 423)
+[x] JWT HS256: sub, role, institution_id, course_enrollments, jti, 24h exp
+[x] SESSIONS row on login (jti, SHA-256 fingerprint, last_seen_at, expires_at)
+[x] POST /api/v1/auth/logout — revoked_at on session
+[x] GET /api/v1/me — authenticated profile
+[x] Auto-enroll first ACTIVE course on register (local addition)
+[x] Onboarding enrolls course (POST /api/users/onboarding + courseId) — local addition
+
+[~] Legacy duplicate routes under /api/auth (Supabase-oriented) — parallel stack
+
+Definition of Done — Task 2
+[x] Login, logout, register, /me functional (v1 path)
+[x] Lockout implemented
+[x] JWT + SESSIONS contract implemented
+[~] Register scope differs from brief (open vs admin-only)
+
+================================================================================
+TASK 3: RBAC middleware
+================================================================================
+Priority: Critical | Sprint 1 · Week 8
+
+[x] authenticate() — Bearer JWT, session lookup, revoked check, 24h freshness, req.auth
+[x] requireRole(...roles) — 403 if role not allowed
+[x] requireRole on /api/v1/moderation/* (FACULTY, ADMIN)
+[x] requireRole on /api/v1/admin/* (ADMIN)
+[x] Per-route authenticate on v1 Q&A, notifications, flags, etc.
+
+[~] NOT a global router.use(authenticate) on all /api/v1/* — applied per handler
+[~] Auth routes correctly public; legacy /api/questions|answers|votes unauthenticated GETs
+
+[~] Integration tests for RBAC
+    - server/tests use MSW mocks; paths like /api/moderation/decrypt (not /api/v1/...)
+    - TC-AUTH-06 STUDENT 403 exists against mock app, not guaranteed against live server
+
+[ ] Live integration test: expired session → 401 (not found as automated test on real DB)
+
+Definition of Done — Task 3
+[~] Middleware on protected routes (v1 yes; legacy routes inconsistent)
+[~] STUDENT → moderation 403 tested via mocks
+[ ] Expired session test on real backend
+
+================================================================================
+TASK 4: Safe-Space Anonymity Engine
+================================================================================
+Priority: Critical | Sprint 1–2 · Week 8–9
+
+[~] generateAlias(user_id, course_id) — implemented in anonymity.ts
+[ ] Wired on ENROLLMENT insert (alias never written to enrollments.pseudonymous_alias)
+
+[x] encryptIdentity() on every POST question + answer (v1-qa.ts)
+[x] AES-256-GCM, IV || authTag || ciphertext layout
+[x] hashed_user_id with tenant salt
+[~] KMS GenerateDataKey — NOT used; local master key (ANONYMITY_MASTER_KEY env) per R-02 fallback
+[x] data_key_id stored as local:base64 wrapped DEK
+
+[x] decryptIdentity() — FACULTY/ADMIN only
+[x] MODERATION_AUDIT_LOG on denied decrypt (DECRYPT_IDENTITY_DENIED)
+[x] Audit row before successful decrypt (DECRYPT_IDENTITY)
+[x] decryptThresholdCheck — >3 decryptions/24h → DECRYPT_THRESHOLD to admins
+
+[x] is_anonymous sanitization in GET responses (author id/name hidden)
+
+[~] Tests: TC-ANON-01 KMS todo; TC-ANON-03/05 todo; TC-ANON-04 uses MSW not live DB
+
+Definition of Done — Task 4
+[x] encryptIdentity on POST questions/answers
+[x] decrypt gated to FACULTY/ADMIN with audit
+[x] Threshold notification wired
+[~] Alias generation not hooked to enrollments
+[~] KMS not used (env master key instead)
+[ ] Live ciphertext leak test on real API
+
+================================================================================
+TASK 5: Q&A lifecycle endpoints
+================================================================================
+Priority: Critical | Sprint 2 · Week 9
+
+[x] POST /api/v1/questions — Zod, enrollment check, encryptIdentity, tags
+[x] GET /api/v1/questions — list + filters (auth required)
+[x] GET /api/v1/questions/:id — detail + sanitized author
+[x] POST /api/v1/answers — OPEN question check, encryptIdentity, NEW_REPLY notification
+[x] GET /api/v1/questions/:id/answers
+[x] POST /api/v1/votes — UPVOTE notification on value=1
+[~] Votes: toggle up/down/remove (brief: 409 on duplicate via UNIQUE; local UX change)
+[x] PATCH accept-answer — OP only, single accept, sets is_accepted + is_verified
+[x] PATCH /api/v1/answers/:id/verify — FACULTY only
+[x] POST/DELETE /api/v1/bookmarks
+[x] Hot score DB trigger (see Task 1)
+[x] DELETE questions/answers; PATCH resolve question
+[x] HTTP 423 for archived / locked content
+
+[~] Legacy /api/questions|answers|votes — old schema, broken vs current DB (do not use)
+
+FRONTEND (React)
+[x] Dashboard, question detail, ask modal, vote UI, post answer
+[x] Mark as Answer (uses accept-answer API)
+[x] Onboarding + course pick (fixes enrollment)
+[ ] Bookmarks UI (API only; button on question detail is non-functional)
+
+Definition of Done — Task 5
+[x] Listed v1 endpoints functional (with vote toggle deviation)
+[x] Hot score recomputes via trigger
+[~] Single-vote 409 behavior replaced by toggle in app layer
+
+================================================================================
+TASK 6: Moderation API with audit trail
+================================================================================
+Priority: High | Sprint 2 · Week 10
+
+[x] GET /api/v1/moderation/flags?course_id= — OPEN flags for course
+[x] POST /api/v1/moderation/actions — HIDE|LOCK|DELETE|UNHIDE, justification ≥10, audit log
+[x] POST /api/v1/moderation/decrypt — decryptIdentity
+[x] POST /api/v1/flags — authenticated users, duplicate → 409
+[x] Auto-hide trigger (phase3): ≥5 flags/60min OR hot_score < -10 → HIDDEN
+
+FRONTEND
+[x] Moderation page — flags, actions, decrypt (src/pages/Moderation.tsx)
+
+Definition of Done — Task 6
+[x] Faculty flag, hide, lock, decrypt via API
+[x] Audit log on moderation actions + decrypt flow
+[x] Auto-hide trigger in DB
+
+================================================================================
+TASK 7: Notification subsystem
+================================================================================
+Priority: Medium | Sprint 2 · Week 10
+
+[x] emitNotification() — NOTIFICATIONS insert, JSONB payload
+[x] NEW_REPLY on POST answers
+[x] ACCEPTED on accept-answer
+[x] UPVOTE on vote value=1
+[x] FLAG_TRIAGE to faculty/admin in course on POST flags
+[x] DECRYPT_THRESHOLD to admins
+[x] GET /api/v1/notifications + PATCH .../read
+[x] 60/hour rate limit → delivery_channel DIGEST
+
+[~] 24h digest cron — digest-cron.ts + digest.ts (Nodemailer)
+    - Runs only if ENABLE_DIGEST_CRON=true
+    - Skips if SMTP_* env vars missing
+
+FRONTEND
+[x] Navbar notification dropdown loads API
+
+Definition of Done — Task 7
+[x] In-app notifications API + UI hook
+[~] Daily digest email (code present; needs SMTP + cron env)
+[x] Rate limiter (60/hour coalesce to DIGEST)
+
+================================================================================
+TASK 8: Knowledge Repository — semester rollover
+================================================================================
+Priority: Medium | Sprint 3 · Week 11
+
+[x] POST /api/v1/admin/courses/:id/archive — ADMIN only
+[x] Course → ARCHIVED; questions/answers → ARCHIVED; copy to partitions; delete live rows
+[x] Archive partition tables + RLS (no update/delete on archive)
+[x] Controller 423 on archived artefacts (Q&A routes)
+
+[ ] Rebuild GIN indices on archive partition (not in archive route)
+[~] Archived content searchable — live rows deleted after archive (search may not hit archive)
+
+Definition of Done — Task 8
+[x] Admin archive in one API call
+[~] Archived searchable (partition exists; app may not query archive for feed/search)
+[x] Mutations on archived return 423
+
+================================================================================
+TASK 9: SSO integration (OAuth 2.0 / SAML 2.0)
+================================================================================
+Priority: Conditional | Sprint 3 · Week 11
+
+[ ] passport-saml / passport-oauth2
+[ ] GET /api/v1/auth/sso/start
+[ ] GET /api/v1/auth/sso/callback
+[ ] JIT user provisioning from IdP
+[ ] test.todo('TC-AUTH-01: SAML2 SSO') in server/tests/auth/auth.test.ts
+
+Definition of Done — Task 9
+[ ] Not implemented (conditional on UPM IdP — R-01)
+
+================================================================================
+TASK 10: Performance tuning (Phase 4)
+================================================================================
+Priority: High | Sprint 4 · Weeks 11–12
+
+[x] pg_stat_statements extension migration
+[x] GET /api/v1/admin/perf/slow-queries — top queries from pg_stat_statements
+[x] load-tests/search-performance.js (k6) + load-tests/README.md
+[x] docs/QA-INFRASTRUCTURE.md — test pyramid, CI notes
+
+[ ] P95 < 2s under 500 concurrent users — not documented as achieved
+[ ] EXPLAIN ANALYZE runbook / results checked in
+[ ] Materialized views for feed
+[ ] Coordinated tsvector weight tuning with search owner
+
+Definition of Done — Task 10
+[~] Tooling only; performance milestone not verified in repo
+
+================================================================================
+FINAL CHECKLIST (from brief)
+================================================================================
+[~] PostgreSQL schema deployed with all constraints and indices
+[x] Authentication functional (bcrypt path — SSO N/A)
+[~] RBAC middleware enforcing role on every protected route
+[~] Anonymity Engine encrypting on artefact creation; decryption audited
+[x] Q&A lifecycle complete with Hot Score recomputation
+[x] Moderation API with immutable audit trail
+[~] Notification subsystem (in-app yes; 24h digest needs SMTP+cron)
+[~] Knowledge Repository semester-rollover (archive yes; search-on-archive unclear)
+[ ] P95 < 2s on search/feed under 500 concurrent users
+
+================================================================================
+FRONTEND / FULL-STACK (not in backend brief but relevant to "implemented")
+================================================================================
+[x] React + Vite + TypeScript UI (port 8080)
+[x] Auth page — login/register (.edu validation)
+[x] Onboarding — 4 steps including course enrollment (local)
+[x] Dashboard — questions list, categories, ask modal
+[x] Question detail — answers, votes, resolve, delete, accept answer
+[x] Admin page — institutions, courses, enrollments
+[x] Moderation page — faculty workflows
+[x] Notifications in navbar
+[ ] Bookmarks wired in UI
+[ ] Forgot password
+[ ] SSO login button
+
+================================================================================
+QA / CI (supporting evidence)
+================================================================================
+[x] Jest backend — auth, anonymity, qa-lifecycle, smoke (mostly MSW-based)
+[x] Jest frontend — smoke (AuthPage.test.tsx)
+[x] MSW handlers for mock API
+[~] Tests often target legacy paths (/api/questions vs /api/v1/...)
+[ ] Proof of staging deploy / UAT pass rate
+
+================================================================================
+KNOWN GAPS & TECH DEBT (recommended next work)
+================================================================================
+1. Remove or migrate legacy /api/questions|answers|votes routes (schema mismatch).
+2. Add migration versioning table (or adopt Prisma/Knex).
+3. Wire generateAlias on enrollment; use pseudonymous_alias in anonymous UI.
+4. Gate register endpoint OR document intentional open registration.
+5. Add global authenticate middleware for /api/v1 + integration tests on real app.
+6. Implement SSO if IdP available (Task 9).
+7. Wire bookmarks in frontend; enable digest cron + SMTP in staging.
+8. Prove performance SLO with k6 at 500 VUs and document P95.
+9. Query archive tables for historical search if required by FR-REPO-01.
+
+================================================================================
+RECENT UNCOMMITTED FIXES (since last push — see CHANGES_SINCE_LAST_PUSH.txt)
+================================================================================
+- users.ts: v1 schema + authenticate fix + onboarding enrollment
+- v1.ts: courses/available, auto-enroll on register
+- v1-qa.ts: question validation, vote toggle, accept sets is_verified
+- Onboarding course step; needsCourseEnrollment routing
+- api.ts / AuthContext / VoteCounter / QuestionDetail fixes
+
+================================================================================
+END OF CHECKLIST
+================================================================================

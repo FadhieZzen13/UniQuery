@@ -5,6 +5,22 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('token');
 };
 
+const formatApiError = (payload: {
+  error?: string;
+  details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
+}) => {
+  const fieldErrors = payload.details?.fieldErrors;
+  if (fieldErrors) {
+    for (const messages of Object.values(fieldErrors)) {
+      if (messages?.[0]) return messages[0];
+    }
+  }
+  if (payload.details?.formErrors?.[0]) {
+    return payload.details.formErrors[0];
+  }
+  return payload.error || 'An error occurred';
+};
+
 // Generic fetch wrapper with auth headers
 const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
   const token = getAuthToken();
@@ -24,7 +40,7 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'An error occurred' }));
-    throw new Error(error.error || 'An error occurred');
+    throw new Error(formatApiError(error));
   }
 
   return response.json();
@@ -33,21 +49,28 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
 // Auth API
 export const authApi = {
   register: async (email: string, password: string) => {
-    return fetchWithAuth('/auth/register', {
+    return fetchWithAuth('/v1/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        institutionalEmail: email,
+        password,
+        institutionId: 'a1ef33a4-8de7-4cd8-a7af-693939ed5171',
+      }),
     });
   },
 
   login: async (email: string, password: string) => {
-    return fetchWithAuth('/auth/login', {
+    return fetchWithAuth('/v1/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        institutionalEmail: email,
+        password,
+      }),
     });
   },
 
   verify: async () => {
-    return fetchWithAuth('/auth/verify');
+    return fetchWithAuth('/v1/me');
   },
 };
 
@@ -57,10 +80,10 @@ export const usersApi = {
     return fetchWithAuth('/users/me');
   },
 
-  completeOnboarding: async (name: string, major: string, year: string) => {
+  completeOnboarding: async (name: string, major: string, year: string, courseId: string) => {
     return fetchWithAuth('/users/onboarding', {
       method: 'POST',
-      body: JSON.stringify({ name, major, year }),
+      body: JSON.stringify({ name, major, year, courseId }),
     });
   },
 
@@ -86,29 +109,34 @@ export const questionsApi = {
     if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
     if (params?.offset !== undefined) searchParams.append('offset', params.offset.toString());
     const queryString = searchParams.toString();
-    return fetchWithAuth(`/questions${queryString ? `?${queryString}` : ''}`);
+    return fetchWithAuth(`/v1/questions${queryString ? `?${queryString}` : ''}`);
   },
 
   getById: async (id: string) => {
-    return fetchWithAuth(`/questions/${id}`);
+    return fetchWithAuth(`/v1/questions/${id}`);
   },
 
   create: async (data: { title: string; description: string; category: string; tags: string[] }) => {
-    return fetchWithAuth('/questions', {
+    return fetchWithAuth('/v1/questions', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        title: data.title.trim(),
+        body: data.description.trim(),
+        category: data.category,
+        tags: data.tags,
+      }),
     });
   },
 
   delete: async (id: string) => {
-    return fetchWithAuth(`/questions/${id}`, {
+    return fetchWithAuth(`/v1/questions/${id}`, {
       method: 'DELETE',
     });
   },
 
   resolve: async (id: string) => {
-    return fetchWithAuth(`/questions/${id}/resolve`, {
-      method: 'PUT',
+    return fetchWithAuth(`/v1/questions/${id}/resolve`, {
+      method: 'PATCH',
     });
   },
 };
@@ -116,24 +144,30 @@ export const questionsApi = {
 // Answers API
 export const answersApi = {
   getForQuestion: async (questionId: string) => {
-    return fetchWithAuth(`/answers/question/${questionId}`);
+    return fetchWithAuth(`/v1/questions/${questionId}/answers`);
   },
 
   create: async (questionId: string, content: string) => {
-    return fetchWithAuth('/answers', {
+    return fetchWithAuth('/v1/answers', {
       method: 'POST',
-      body: JSON.stringify({ questionId, content }),
+      body: JSON.stringify({ questionId, body: content }),
     });
   },
 
   verify: async (answerId: string) => {
-    return fetchWithAuth(`/answers/${answerId}/verify`, {
+    return fetchWithAuth(`/v1/answers/${answerId}/verify`, {
       method: 'PUT',
     });
   },
 
+  accept: async (questionId: string, answerId: string) => {
+    return fetchWithAuth(`/v1/questions/${questionId}/accept-answer/${answerId}`, {
+      method: 'PATCH',
+    });
+  },
+
   delete: async (answerId: string) => {
-    return fetchWithAuth(`/answers/${answerId}`, {
+    return fetchWithAuth(`/v1/answers/${answerId}`, {
       method: 'DELETE',
     });
   },
@@ -142,24 +176,115 @@ export const answersApi = {
 // Votes API
 export const votesApi = {
   voteQuestion: async (questionId: string, value: 1 | -1) => {
-    return fetchWithAuth(`/votes/question/${questionId}`, {
+    return fetchWithAuth(`/v1/votes`, {
       method: 'POST',
-      body: JSON.stringify({ value }),
+      body: JSON.stringify({ targetType: 'QUESTION', targetId: questionId, value }),
     });
   },
 
   voteAnswer: async (answerId: string, value: 1 | -1) => {
-    return fetchWithAuth(`/votes/answer/${answerId}`, {
+    return fetchWithAuth(`/v1/votes`, {
       method: 'POST',
-      body: JSON.stringify({ value }),
+      body: JSON.stringify({ targetType: 'ANSWER', targetId: answerId, value }),
     });
   },
 
   getQuestionVoteStatus: async (questionId: string) => {
-    return fetchWithAuth(`/votes/question/${questionId}/status`);
+    return fetchWithAuth(`/v1/votes/question/${questionId}/status`);
   },
 
   getAnswerVoteStatus: async (answerId: string) => {
-    return fetchWithAuth(`/votes/answer/${answerId}/status`);
+    return fetchWithAuth(`/v1/votes/answer/${answerId}/status`);
+  },
+};
+
+// Notifications API (v1)
+export const notificationsApi = {
+  getAll: async (params?: { limit?: number; offset?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.offset !== undefined) searchParams.append('offset', params.offset.toString());
+    const queryString = searchParams.toString();
+    return fetchWithAuth(`/v1/notifications${queryString ? `?${queryString}` : ''}`);
+  },
+
+  markRead: async (id: string) => {
+    return fetchWithAuth(`/v1/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  },
+};
+
+// Courses API
+export const coursesApi = {
+  getAvailable: async () => {
+    return fetchWithAuth('/v1/courses/available');
+  },
+
+  getMine: async () => {
+    return fetchWithAuth('/v1/courses/my');
+  },
+};
+
+// Moderation API
+export const moderationApi = {
+  getFlags: async (courseId: string) => {
+    return fetchWithAuth(`/v1/moderation/flags?course_id=${courseId}`);
+  },
+
+  act: async (data: { targetType: 'QUESTION' | 'ANSWER'; targetId: string; action: 'HIDE' | 'LOCK' | 'DELETE' | 'UNHIDE'; justification: string }) => {
+    return fetchWithAuth('/v1/moderation/actions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  decrypt: async (markerId: string) => {
+    return fetchWithAuth('/v1/moderation/decrypt', {
+      method: 'POST',
+      body: JSON.stringify({ markerId }),
+    });
+  },
+};
+
+// Admin API
+export const adminApi = {
+  listInstitutions: async () => {
+    return fetchWithAuth('/v1/admin/institutions');
+  },
+
+  createInstitution: async (data: { name: string; domain: string }) => {
+    return fetchWithAuth('/v1/admin/institutions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  listCourses: async (institutionId: string) => {
+    return fetchWithAuth(`/v1/admin/courses?institution_id=${institutionId}`);
+  },
+
+  createCourse: async (data: { institutionId: string; code: string; title: string; facultyId?: string }) => {
+    return fetchWithAuth('/v1/admin/courses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  listEnrollments: async (courseId: string) => {
+    return fetchWithAuth(`/v1/admin/enrollments?course_id=${courseId}`);
+  },
+
+  createEnrollment: async (data: { courseId: string; userEmail: string; role: 'STUDENT' | 'TA' | 'FACULTY' }) => {
+    return fetchWithAuth('/v1/admin/enrollments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteEnrollment: async (enrollmentId: string) => {
+    return fetchWithAuth(`/v1/admin/enrollments/${enrollmentId}`, {
+      method: 'DELETE',
+    });
   },
 };

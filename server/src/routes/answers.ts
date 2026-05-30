@@ -1,6 +1,6 @@
 import express from 'express';
 import { pool } from '../index.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js'; // Fixed import name
 
 const router = express.Router();
 
@@ -44,7 +44,7 @@ router.get('/question/:questionId', async (req, res) => {
 });
 
 // Post an answer to a question
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   const { questionId, content } = req.body;
 
   if (!questionId || !content) {
@@ -62,16 +62,16 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Cannot answer a resolved question' });
     }
 
-    // Insert answer
+    // Insert answer - updated context path
     const result = await pool.query(
       'INSERT INTO answers (question_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, content, is_verified, created_at',
-      [questionId, req.userId, content]
+      [questionId, req.auth?.userId, content]
     );
 
-    // Get user info
+    // Get user info - updated context path
     const userResult = await pool.query(
       'SELECT id, name, avatar, reputation FROM users WHERE id = $1',
-      [req.userId]
+      [req.auth?.userId]
     );
 
     const answer = result.rows[0];
@@ -97,7 +97,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Mark answer as verified (only question author can do this)
-router.put('/:id/verify', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/:id/verify', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -114,7 +114,8 @@ router.put('/:id/verify', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     const answer = answerResult.rows[0];
-    if (answer.question_author_id !== req.userId) {
+    // updated context path
+    if (answer.question_author_id !== req.auth?.userId) {
       return res.status(403).json({ error: 'Only question author can verify answers' });
     }
 
@@ -139,7 +140,7 @@ router.put('/:id/verify', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Delete an answer (only by author)
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -149,7 +150,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Answer not found' });
     }
 
-    if (answer.rows[0].user_id !== req.userId) {
+    // updated context path
+    if (answer.rows[0].user_id !== req.auth?.userId) {
       return res.status(403).json({ error: 'Not authorized to delete this answer' });
     }
 

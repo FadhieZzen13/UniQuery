@@ -3,10 +3,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm")
   const registerForm = document.getElementById("registerForm")
 
+  // Helper to clear existing error messages
+  function clearErrors() {
+    document.querySelectorAll(".error-message").forEach(el => {
+      el.textContent = ""
+      el.style.display = "none"
+    })
+  }
+
   // Login Form Handler
   if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault()
+      clearErrors()
 
       const email = document.getElementById("email").value
       const password = document.getElementById("password").value
@@ -17,19 +26,40 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
-      // Here you would typically make an API call to your Flask backend
-      console.log("Login attempt:", { email, password })
+      try {
+        // Real API call to your Node.js/Express backend
+        const response = await fetch("http://localhost:5000/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
+        })
 
-      // Simulate successful login
-      alert("Login successful! Redirecting...")
-      window.location.href = "/"
+        const data = await response.json()
+
+        if (!response.ok) {
+          showError("emailError", data.error || "Login failed")
+          return
+        }
+
+        // Store the JWT token securely for future authenticated requests
+        localStorage.setItem("token", data.token)
+        
+        alert("Login successful! Redirecting...")
+        window.location.href = "/"
+      } catch (error) {
+        console.error("Login error:", error)
+        alert("An error occurred during login. Please try again.")
+      }
     })
   }
 
   // Register Form Handler
   if (registerForm) {
-    registerForm.addEventListener("submit", (e) => {
+    registerForm.addEventListener("submit", async (e) => {
       e.preventDefault()
+      clearErrors()
 
       const fullname = document.getElementById("fullname").value
       const email = document.getElementById("email").value
@@ -52,12 +82,29 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
-      // Here you would typically make an API call to your Flask backend
-      console.log("Registration attempt:", { fullname, email, password })
+      try {
+        // Real API call to your Node.js/Express backend
+        const response = await fetch("http://localhost:5000/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name: fullname, email, password })
+        })
 
-      // Simulate successful registration
-      alert("Registration successful! Please login.")
-      window.location.href = "/login"
+        const data = await response.json()
+
+        if (!response.ok) {
+          showError("emailError", data.error || "Registration failed")
+          return
+        }
+
+        alert("Registration successful! Please login.")
+        window.location.href = "/login"
+      } catch (error) {
+        console.error("Registration error:", error)
+        alert("An error occurred during registration. Please try again.")
+      }
     })
   }
 

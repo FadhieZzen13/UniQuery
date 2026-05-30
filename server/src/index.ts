@@ -7,6 +7,8 @@ import usersRoutes from './routes/users.js';
 import questionsRoutes from './routes/questions.js';
 import answersRoutes from './routes/answers.js';
 import votesRoutes from './routes/votes.js';
+import v1Routes from './routes/v1.js';
+import { startDigestCron } from './services/digest-cron.js';
 
 // Load environment variables
 dotenv.config();
@@ -45,7 +47,12 @@ app.use('/api/users', usersRoutes);
 app.use('/api/questions', questionsRoutes);
 app.use('/api/answers', answersRoutes);
 app.use('/api/votes', votesRoutes);
+app.use('/api/v1', v1Routes);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+if (process.env.ENABLE_DIGEST_CRON === 'true') {
+  startDigestCron();
+}

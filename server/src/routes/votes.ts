@@ -1,11 +1,11 @@
 import express from 'express';
 import { pool } from '../index.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js'; // Fixed import name
 
 const router = express.Router();
 
 // Vote on a question
-router.post('/question/:questionId', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/question/:questionId', authenticate, async (req: AuthRequest, res) => {
   const { questionId } = req.params;
   const { value } = req.body;
 
@@ -21,14 +21,14 @@ router.post('/question/:questionId', authenticateToken, async (req: AuthRequest,
     }
 
     // Can't vote on own question
-    if (questionCheck.rows[0].user_id === req.userId) {
+    if (questionCheck.rows[0].user_id === req.auth?.userId) {
       return res.status(400).json({ error: "You can't vote on your own question" });
     }
 
     // Check if user already voted
     const existingVote = await pool.query(
       'SELECT id, value FROM votes WHERE user_id = $1 AND question_id = $2',
-      [req.userId, questionId]
+      [req.auth?.userId, questionId]
     );
 
     if (existingVote.rows.length > 0) {
@@ -62,7 +62,7 @@ router.post('/question/:questionId', authenticateToken, async (req: AuthRequest,
     // Insert new vote
     await pool.query(
       'INSERT INTO votes (user_id, question_id, value) VALUES ($1, $2, $3)',
-      [req.userId, questionId, value]
+      [req.auth?.userId, questionId, value]
     );
 
     // Update question author's reputation
@@ -80,7 +80,7 @@ router.post('/question/:questionId', authenticateToken, async (req: AuthRequest,
 });
 
 // Vote on an answer
-router.post('/answer/:answerId', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/answer/:answerId', authenticate, async (req: AuthRequest, res) => { // Fixed middleware name
   const { answerId } = req.params;
   const { value } = req.body;
 
@@ -96,14 +96,14 @@ router.post('/answer/:answerId', authenticateToken, async (req: AuthRequest, res
     }
 
     // Can't vote on own answer
-    if (answerCheck.rows[0].user_id === req.userId) {
+    if (answerCheck.rows[0].user_id === req.auth?.userId) {
       return res.status(400).json({ error: "You can't vote on your own answer" });
     }
 
     // Check if user already voted
     const existingVote = await pool.query(
       'SELECT id, value FROM votes WHERE user_id = $1 AND answer_id = $2',
-      [req.userId, answerId]
+      [req.auth?.userId, answerId]
     );
 
     if (existingVote.rows.length > 0) {
@@ -137,7 +137,7 @@ router.post('/answer/:answerId', authenticateToken, async (req: AuthRequest, res
     // Insert new vote
     await pool.query(
       'INSERT INTO votes (user_id, answer_id, value) VALUES ($1, $2, $3)',
-      [req.userId, answerId, value]
+      [req.auth?.userId, answerId, value]
     );
 
     // Update answer author's reputation
@@ -155,11 +155,11 @@ router.post('/answer/:answerId', authenticateToken, async (req: AuthRequest, res
 });
 
 // Get user's vote status for a question
-router.get('/question/:questionId/status', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/question/:questionId/status', authenticate, async (req: AuthRequest, res) => { // Fixed middleware name
   try {
     const result = await pool.query(
       'SELECT value FROM votes WHERE user_id = $1 AND question_id = $2',
-      [req.userId, req.params.questionId]
+      [req.auth?.userId, req.params.questionId]
     );
     res.json({ value: result.rows[0]?.value || 0 });
   } catch (error) {
@@ -169,11 +169,11 @@ router.get('/question/:questionId/status', authenticateToken, async (req: AuthRe
 });
 
 // Get user's vote status for an answer
-router.get('/answer/:answerId/status', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/answer/:answerId/status', authenticate, async (req: AuthRequest, res) => { // Fixed middleware name
   try {
     const result = await pool.query(
       'SELECT value FROM votes WHERE user_id = $1 AND answer_id = $2',
-      [req.userId, req.params.answerId]
+      [req.auth?.userId, req.params.answerId]
     );
     res.json({ value: result.rows[0]?.value || 0 });
   } catch (error) {

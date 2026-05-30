@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Plus, Menu, X, GraduationCap, LogOut } from "lucide-react";
+import { Search, Plus, Menu, X, GraduationCap, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { notificationsApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -23,6 +24,32 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  const loadNotifications = async () => {
+    if (!user || notifLoading) return;
+    setNotifLoading(true);
+    try {
+      const result = await notificationsApi.getAll({ limit: 20, offset: 0 });
+      setNotifications(result.notifications || []);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await notificationsApi.markRead(id);
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, read_at: new Date().toISOString() } : item))
+      );
+    } catch (error) {
+      console.error("Failed to mark notification read", error);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -31,6 +58,7 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
 
   const displayName = user?.name || user?.email?.split("@")[0] || "User";
   const avatarUrl = user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
+  const unreadCount = notifications.filter((item) => !item.read_at).length;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -68,6 +96,48 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
 
         {/* Right side actions */}
         <div className="flex items-center gap-3">
+          <DropdownMenu onOpenChange={(open) => open && loadNotifications()}>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="relative flex items-center justify-center w-9 h-9 rounded-full border border-border hover:bg-muted/50"
+                aria-label="Notifications"
+              >
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 text-[10px] bg-destructive text-destructive-foreground rounded-full px-1">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 max-h-[60vh] overflow-auto">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium">Notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  {notifLoading ? "Loading..." : `${notifications.length} total`}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              {!notifLoading && notifications.length === 0 && (
+                <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+                  No notifications yet
+                </div>
+              )}
+              {notifications.map((item) => (
+                <DropdownMenuItem
+                  key={item.id}
+                  onClick={() => handleMarkRead(item.id)}
+                  className={cn("flex flex-col items-start gap-1", !item.read_at && "bg-muted/40")}
+                >
+                  <span className="text-xs font-semibold text-foreground">{item.type}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {item.payload ? JSON.stringify(item.payload) : ""}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             onClick={onAskQuestion}
             size="sm"
@@ -110,6 +180,9 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
                   </p>
                 )}
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/moderation")}>Moderation</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/admin")}>Admin</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />

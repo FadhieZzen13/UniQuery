@@ -20,7 +20,7 @@ const VoteCounter = ({ initialVotes, size = "md", questionId, answerId, authorId
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if the current user is the author of this content
-  const isOwnContent = user && authorId && user.id.toString() === authorId;
+  const isOwnContent = user && authorId && user.id === authorId;
 
   // Fetch user's existing vote and vote count
   const fetchVoteStatusAndCount = async () => {

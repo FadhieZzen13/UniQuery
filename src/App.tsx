@@ -9,6 +9,8 @@ import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import Dashboard from "./pages/Dashboard";
 import QuestionDetail from "./pages/QuestionDetail";
+import Moderation from "./pages/Moderation";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,8 +31,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirect to onboarding if not completed
-  if (user && !user.onboardingCompleted) {
+  if (user && (!user.onboardingCompleted || user.needsCourseEnrollment)) {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -53,8 +54,7 @@ const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // If onboarding is already completed, go to dashboard
-  if (user && user.onboardingCompleted) {
+  if (user && user.onboardingCompleted && !user.needsCourseEnrollment) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -74,7 +74,7 @@ const IndexRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isAuthenticated) {
-    if (user && !user.onboardingCompleted) {
+    if (user && (!user.onboardingCompleted || user.needsCourseEnrollment)) {
       return <Navigate to="/onboarding" replace />;
     }
     return <Navigate to="/dashboard" replace />;
@@ -96,7 +96,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isAuthenticated) {
-    if (user && !user.onboardingCompleted) {
+    if (user && (!user.onboardingCompleted || user.needsCourseEnrollment)) {
       return <Navigate to="/onboarding" replace />;
     }
     return <Navigate to="/dashboard" replace />;
@@ -137,6 +137,22 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <QuestionDetail />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/moderation"
+      element={
+        <ProtectedRoute>
+          <Moderation />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin"
+      element={
+        <ProtectedRoute>
+          <Admin />
         </ProtectedRoute>
       }
     />

@@ -1,0 +1,1 @@
+(async () => { const { pool } = await import('./src/index.js'); await pool.query(\INSERT INTO institutions (id, name, domain) VALUES ('a1ef33a4-8de7-4cd8-a7af-693939ed5171', 'Test University', 'test.edu') ON CONFLICT DO NOTHING\); console.log('Done'); process.exit(0); })();
