@@ -1,0 +1,49 @@
+openapi: 3.0.0
+info:
+  title: UniQuery API
+  description: Core RESTful API for the UniQuery Campus Q&A System.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user via SSO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ssoToken:
+                  type: string
+      responses:
+        '200':
+          description: Successful login (Returns JWT)
+  /questions:
+    get:
+      summary: Retrieve the Q&A feed
+      responses:
+        '200':
+          description: List of anonymized questions
+  /search:
+    get:
+      summary: Context-aware search for questions
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful search results
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
