@@ -1,8 +1,20 @@
 import express from 'express';
 import { pool } from '../index.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js'; // Fixed import name
+import { supabaseAnon } from '../lib/supabase.js';
 
 const router = express.Router();
+
+// Supabase RPC for full-text search
+router.get('/search', async (req, res) => {
+  try {
+    const { data } = await supabaseAnon.rpc('search_questions_ranked', { search_query: req.query.q });
+    res.json(data);
+  } catch (error) {
+    console.error('Error in search:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
 
 // Get all questions with filtering and sorting
 router.get('/', async (req, res) => {
