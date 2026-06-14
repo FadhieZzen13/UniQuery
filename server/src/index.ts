@@ -2,11 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
-import questionsRoutes from './routes/questions.js';
-import answersRoutes from './routes/answers.js';
-import votesRoutes from './routes/votes.js';
 import v1Routes from './routes/v1.js';
 import { startDigestCron } from './services/digest-cron.js';
 
@@ -42,11 +38,10 @@ app.get('/', (req, res) => {
 });
 
 // --- API Routes ---
-app.use('/api/auth', authRoutes);
+// Legacy /api/auth|questions|answers|votes routes referenced columns dropped in the
+// schema migration and 500'd at runtime (checklist §0b). The working surface is
+// /api/v1/* (auth, Q&A, votes, moderation) plus /api/users for profiles.
 app.use('/api/users', usersRoutes);
-app.use('/api/questions', questionsRoutes);
-app.use('/api/answers', answersRoutes);
-app.use('/api/votes', votesRoutes);
 app.use('/api/v1', v1Routes);
 
 app.listen(port, () => {

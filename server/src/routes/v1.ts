@@ -12,6 +12,7 @@ import flagsRoutes from './v1-flags.js';
 import notificationsRoutes from './v1-notifications.js';
 import adminRoutes from './v1-admin.js';
 import perfRoutes from './v1-perf.js';
+import usersAdminRoutes from './v1-users.js';
 
 const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET;
@@ -162,7 +163,10 @@ router.post('/auth/login', async (req, res) => {
 
     const user = userResult.rows[0];
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-      return res.status(423).json({ error: 'Account locked. Try again later.' });
+      return res.status(423).json({
+        error: 'Account locked. Try again later.',
+        locked_until: user.locked_until,
+      });
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -330,6 +334,7 @@ router.get('/courses/my', authenticate, async (req: AuthRequest, res) => {
 });
 
 router.use(qaRoutes);
+router.use('/users', usersAdminRoutes);
 router.use('/moderation', moderationRoutes);
 router.use('/flags', flagsRoutes);
 router.use('/notifications', notificationsRoutes);

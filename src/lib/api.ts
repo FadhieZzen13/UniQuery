@@ -189,6 +189,18 @@ export const votesApi = {
     });
   },
 
+  removeQuestionVote: async (questionId: string) => {
+    return fetchWithAuth(`/v1/votes/QUESTION/${questionId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  removeAnswerVote: async (answerId: string) => {
+    return fetchWithAuth(`/v1/votes/ANSWER/${answerId}`, {
+      method: 'DELETE',
+    });
+  },
+
   getQuestionVoteStatus: async (questionId: string) => {
     return fetchWithAuth(`/v1/votes/question/${questionId}/status`);
   },
