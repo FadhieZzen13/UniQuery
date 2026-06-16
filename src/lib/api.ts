@@ -116,7 +116,7 @@ export const questionsApi = {
     return fetchWithAuth(`/v1/questions/${id}`);
   },
 
-  create: async (data: { title: string; description: string; category: string; tags: string[] }) => {
+  create: async (data: { title: string; description: string; category: string; tags: string[]; isAnonymous?: boolean }) => {
     return fetchWithAuth('/v1/questions', {
       method: 'POST',
       body: JSON.stringify({
@@ -124,6 +124,7 @@ export const questionsApi = {
         body: data.description.trim(),
         category: data.category,
         tags: data.tags,
+        isAnonymous: data.isAnonymous ?? false,
       }),
     });
   },
@@ -186,6 +187,18 @@ export const votesApi = {
     return fetchWithAuth(`/v1/votes`, {
       method: 'POST',
       body: JSON.stringify({ targetType: 'ANSWER', targetId: answerId, value }),
+    });
+  },
+
+  removeQuestionVote: async (questionId: string) => {
+    return fetchWithAuth(`/v1/votes/QUESTION/${questionId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  removeAnswerVote: async (answerId: string) => {
+    return fetchWithAuth(`/v1/votes/ANSWER/${answerId}`, {
+      method: 'DELETE',
     });
   },
 

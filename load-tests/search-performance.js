@@ -58,13 +58,14 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:4000';
 export default function () {
   // Pick a random search query
   const query = searchQueries[Math.floor(Math.random() * searchQueries.length)];
-  const url = `${BASE_URL}/api/questions/search?q=${encodeURIComponent(query)}`;
+  const url = `${BASE_URL}/api/v1/search?q=${encodeURIComponent(query)}&limit=20`;
 
   const startTime = Date.now();
 
   const response = http.get(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${__ENV.TOKEN}`,
     },
     tags: { name: 'SearchEndpoint' },
   });
@@ -91,6 +92,13 @@ export default function () {
       } catch {
         return false;
       }
+    },
+    'no author_id leak on anon rows': (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        if (!Array.isArray(body.results)) return false;
+        return !body.results.some((row) => row.is_anonymous === true && row.author_id !== null);
+      } catch { return false; }
     },
   });
 

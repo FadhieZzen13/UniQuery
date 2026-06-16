@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageCircle, Share2, Bookmark, Trash2, CheckCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Share2, Bookmark, Trash2, CheckCircle, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { questionsApi, answersApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ interface Question {
   answerCount: number;
   createdAt: string;
   isResolved?: boolean;
+  isAnonymous?: boolean;
 }
 
 interface Answer {
@@ -296,14 +297,22 @@ const QuestionDetail = () => {
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <img
-                      src={authorAvatarUrl}
-                      alt={question.author.name || "Anonymous"}
-                      className="w-8 h-8 rounded-full"
-                    />
+                    {question.isAnonymous ? (
+                      // Anonymous: never reach for author identity — render the alias placeholder.
+                      // TODO: thread display_alias through the API and show it here when available.
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <img
+                        src={authorAvatarUrl}
+                        alt={question.author.name || "Anonymous"}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
                     <div>
                       <span className="font-medium text-foreground block">
-                        {question.author.name || "Anonymous"}
+                        {question.isAnonymous ? "Anonymous" : question.author.name || "Anonymous"}
                       </span>
                       <span className="text-xs">
                         Asked on {format(createdAtDate, 'MMM d, yyyy')}

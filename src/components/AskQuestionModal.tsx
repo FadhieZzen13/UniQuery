@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -32,6 +34,7 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("academic");
   const [tags, setTags] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +75,7 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
         description: trimmedDescription,
         category,
         tags: tagArray,
+        isAnonymous,
       });
 
       toast({
@@ -83,6 +87,7 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
       setDescription("");
       setCategory("academic");
       setTags("");
+      setIsAnonymous(false);
       onClose();
       onQuestionCreated?.();
     } catch (error) {
@@ -171,6 +176,34 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
               placeholder="e.g. FYP, Bursary, Library (comma separated)"
               className="w-full"
             />
+          </div>
+
+          <div
+            className={`rounded-lg border p-4 transition-all ${
+              isAnonymous
+                ? 'border-l-4 border-l-teal-500 border-teal-200 bg-teal-50/60'
+                : 'border-border bg-muted/40'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="anon-toggle" className="flex items-center gap-2 text-base font-semibold">
+                  <ShieldCheck className={isAnonymous ? 'text-teal-600' : 'text-muted-foreground'} size={18} />
+                  Post anonymously
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {isAnonymous
+                    ? 'Your identity is encrypted and protected. Only authorised faculty may request your identity for moderation purposes.'
+                    : 'You will post as yourself. Toggle on to hide your identity from peers.'}
+                </p>
+              </div>
+              <Switch
+                id="anon-toggle"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+                aria-label="Toggle anonymous posting"
+              />
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">

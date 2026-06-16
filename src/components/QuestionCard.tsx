@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MessageCircle, CheckCircle } from "lucide-react";
+import { MessageCircle, CheckCircle, ShieldCheck } from "lucide-react";
 import VoteCounter from "./VoteCounter";
 import TagPill from "./TagPill";
 import { format } from "date-fns";
@@ -24,6 +24,7 @@ interface QuestionCardProps {
     createdAt: string | Date;
     hasVerifiedAnswer?: boolean;
     isResolved?: boolean;
+    isAnonymous?: boolean;
   };
 }
 
@@ -75,14 +76,23 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
         
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <img
-                src={avatarUrl}
-                alt={question.author.name || "Anonymous"}
-                className="w-5 h-5 rounded-full"
-              />
-              <span className="font-medium">{question.author.name || "Anonymous"}</span>
-            </div>
+            {question.isAnonymous ? (
+              // Anonymous: never reach for author identity — render the alias placeholder.
+              // TODO: thread display_alias through the API and show it here when available.
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Anonymous</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <img
+                  src={avatarUrl}
+                  alt={question.author.name || "Anonymous"}
+                  className="w-5 h-5 rounded-full"
+                />
+                <span className="font-medium">{question.author.name || "Anonymous"}</span>
+              </div>
+            )}
             <span>·</span>
             <span>{format(createdAtDate, 'MMM d, yyyy')}</span>
           </div>

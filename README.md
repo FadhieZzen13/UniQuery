@@ -60,6 +60,34 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Backend database roles (`APPLICATION_DATABASE_URL`)
+
+The API server (`server/`) connects at runtime as **`application_role`**, a non-superuser
+role that **respects Row-Level Security**. `postgres`/`service_role` both `BYPASSRLS`, so
+while the app connects as one of those the RLS policy on `identity_markers` is decorative.
+Connecting as `application_role` activates it (checklist §2.2).
+
+- `APPLICATION_DATABASE_URL` — `application_role` connection used for **all request handling**.
+- `DATABASE_URL` — `postgres`-role connection kept for **migrations only** (the app falls back
+  to it only if `APPLICATION_DATABASE_URL` is unset).
+- `APPLICATION_DATABASE_URL_TEST` — disposable test branch for the integration suite
+  (`NODE_ENV=test`). When unset, `server/tests/integration/*` self-skip.
+
+One-time DBA setup in Supabase to grant `application_role` the privileges it needs (run as a
+superuser; the audit-log overrides from `20260530_validation_fixes.sql` must remain):
+
+```sql
+GRANT CONNECT ON DATABASE postgres TO application_role;
+GRANT USAGE ON SCHEMA public TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO application_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO application_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO application_role;
+ALTER ROLE application_role WITH LOGIN PASSWORD '<strong>';
+-- moderation_audit_log stays append-only: application_role keeps SELECT, INSERT but
+-- UPDATE, DELETE, TRUNCATE remain revoked, and the BEFORE triggers block mutation even
+-- for accidental superuser connections.
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

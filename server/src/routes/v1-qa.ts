@@ -131,6 +131,7 @@ router.get('/questions', authenticate, async (req: AuthRequest, res) => {
       description: row.body,
       category: row.category,
       tags: row.tags || [],
+      isAnonymous: row.is_anonymous,
       author: {
         id: row.is_anonymous ? null : row.author_id,
         name: row.is_anonymous ? 'Anonymous' : row.author_name,
@@ -180,6 +181,15 @@ router.post('/questions', authenticate, async (req: AuthRequest, res) => {
       finalCourseId = fallback.rows[0].course_id;
     }
 
+    const courseStatus = await pool.query(
+      'SELECT status FROM courses WHERE id = $1',
+      [finalCourseId]
+    );
+    // §6.2 — a well-formed UUID that names no real course is unprocessable, not forbidden.
+    if (courseStatus.rows.length === 0) {
+      return res.status(422).json({ error: 'Invalid course' });
+    }
+
     const enrollment = await pool.query(
       'SELECT id FROM enrollments WHERE user_id = $1 AND course_id = $2',
       [userId, finalCourseId]
@@ -188,11 +198,7 @@ router.post('/questions', authenticate, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Not enrolled in course' });
     }
 
-    const courseStatus = await pool.query(
-      'SELECT status FROM courses WHERE id = $1',
-      [finalCourseId]
-    );
-    if (courseStatus.rows.length === 0 || courseStatus.rows[0].status === 'ARCHIVED') {
+    if (courseStatus.rows[0].status === 'ARCHIVED') {
       return res.status(423).json({ error: 'Course is archived' });
     }
 
@@ -280,6 +286,7 @@ router.get('/questions/:id', authenticate, async (req: AuthRequest, res) => {
       category: row.category,
       tags: row.tags || [],
       status: row.status,
+      isAnonymous: row.is_anonymous,
       createdAt: row.created_at,
       votes: parseInt(row.votes) || 0,
       answerCount: parseInt(row.answer_count) || 0,
@@ -431,48 +438,68 @@ router.post('/votes', authenticate, async (req: AuthRequest, res) => {
       return res.status(423).json({ error: 'Target is archived' });
     }
 
-    const existingVote = await pool.query(
-      'SELECT id, value FROM votes WHERE voter_id = $1 AND target_type = $2 AND target_id = $3',
-      [userId, targetType, targetId]
-    );
-
-    let newValue = value;
-
-    if (existingVote.rows.length > 0) {
-      const currentValue = existingVote.rows[0].value;
-      if (currentValue === value) {
-        await pool.query('DELETE FROM votes WHERE id = $1', [existingVote.rows[0].id]);
-        newValue = 0;
-      } else {
-        await pool.query('UPDATE votes SET value = $1 WHERE id = $2', [value, existingVote.rows[0].id]);
-      }
-    } else {
+    // §6.3 — one vote per (voter, target). A second vote surfaces the UNIQUE
+    // constraint as 409. To change or remove a vote, callers DELETE first.
+    try {
       await pool.query(
         `INSERT INTO votes (voter_id, target_type, target_id, value)
          VALUES ($1, $2, $3, $4)`,
         [userId, targetType, targetId, value]
       );
+    } catch (insertError: any) {
+      if (insertError?.code === '23505') {
+        return res.status(409).json({ error: 'You have already voted on this target' });
+      }
+      throw insertError;
+    }
 
-      if (value === 1) {
-        const target = await pool.query(
-          targetType === 'QUESTION'
-            ? 'SELECT author_id FROM questions WHERE id = $1'
-            : 'SELECT author_id FROM answers WHERE id = $1',
-          [targetId]
-        );
-        if (target.rows.length > 0 && target.rows[0].author_id !== userId) {
-          await emitNotification(target.rows[0].author_id, 'UPVOTE', {
-            targetType,
-            targetId,
-          });
-        }
+    if (value === 1) {
+      const target = await pool.query(
+        targetType === 'QUESTION'
+          ? 'SELECT author_id FROM questions WHERE id = $1'
+          : 'SELECT author_id FROM answers WHERE id = $1',
+        [targetId]
+      );
+      if (target.rows.length > 0 && target.rows[0].author_id !== userId) {
+        await emitNotification(target.rows[0].author_id, 'UPVOTE', {
+          targetType,
+          targetId,
+        });
       }
     }
 
-    res.json({ message: 'Vote recorded', value: newValue });
+    res.status(201).json({ message: 'Vote recorded', value });
   } catch (error: any) {
     console.error('Error voting:', error);
     res.status(500).json({ error: 'Error recording vote' });
+  }
+});
+
+// Remove the caller's own vote on a target. Lets the client toggle/change a vote
+// without violating the one-vote-per-target rule enforced on POST.
+router.delete('/votes/:targetType/:targetId', authenticate, async (req: AuthRequest, res) => {
+  const parseResult = voteSchema
+    .pick({ targetType: true, targetId: true })
+    .safeParse({ targetType: req.params.targetType, targetId: req.params.targetId });
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
+  const { targetType, targetId } = parseResult.data;
+  const userId = req.auth?.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    await pool.query(
+      'DELETE FROM votes WHERE voter_id = $1 AND target_type = $2 AND target_id = $3',
+      [userId, targetType, targetId]
+    );
+    res.json({ message: 'Vote removed', value: 0 });
+  } catch (error) {
+    console.error('Error removing vote:', error);
+    res.status(500).json({ error: 'Error removing vote' });
   }
 });
 
