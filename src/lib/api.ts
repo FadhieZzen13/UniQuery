@@ -116,7 +116,7 @@ export const questionsApi = {
     return fetchWithAuth(`/v1/questions/${id}`);
   },
 
-  create: async (data: { title: string; description: string; category: string; tags: string[] }) => {
+  create: async (data: { title: string; description: string; category: string; tags: string[]; isAnonymous?: boolean }) => {
     return fetchWithAuth('/v1/questions', {
       method: 'POST',
       body: JSON.stringify({
@@ -124,6 +124,7 @@ export const questionsApi = {
         body: data.description.trim(),
         category: data.category,
         tags: data.tags,
+        isAnonymous: data.isAnonymous ?? false,
       }),
     });
   },
@@ -137,6 +138,19 @@ export const questionsApi = {
   resolve: async (id: string) => {
     return fetchWithAuth(`/v1/questions/${id}/resolve`, {
       method: 'PATCH',
+    });
+  },
+
+  addBookmark: async (id: string) => {
+    return fetchWithAuth('/v1/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ questionId: id }),
+    });
+  },
+
+  removeBookmark: async (id: string) => {
+    return fetchWithAuth(`/v1/questions/${id}/bookmarks`, {
+      method: 'DELETE',
     });
   },
 };
@@ -228,6 +242,13 @@ export const coursesApi = {
 
 // Moderation API
 export const moderationApi = {
+  createFlag: async (targetType: string, targetId: string) => {
+    return fetchWithAuth('/v1/flags', {
+      method: 'POST',
+      body: JSON.stringify({ targetType, targetId }),
+    });
+  },
+
   getFlags: async (courseId: string) => {
     return fetchWithAuth(`/v1/moderation/flags?course_id=${courseId}`);
   },

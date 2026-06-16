@@ -89,6 +89,11 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
               placeholder="Search questions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="pl-10 bg-muted/50 border-muted focus:bg-card"
             />
           </div>

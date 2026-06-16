@@ -260,6 +260,6 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_recompute_hot_score ON votes;
 CREATE TRIGGER trg_recompute_hot_score
-AFTER INSERT OR DELETE ON votes
+AFTER INSERT OR UPDATE OR DELETE ON votes
 FOR EACH ROW
 EXECUTE FUNCTION recompute_question_hot_score();

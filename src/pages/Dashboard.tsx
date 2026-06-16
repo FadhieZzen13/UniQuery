@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useInView } from "react-intersection-observer";
 import { questionsApi } from "@/lib/api";
 import { Category } from "@/types";
 import Navbar from "@/components/Navbar";
@@ -38,19 +39,31 @@ const Dashboard = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const { ref, inView } = useInView();
 
-  const fetchQuestions = async () => {
-    setIsLoading(true);
+  const fetchQuestions = useCallback(async (isNextPage = false) => {
+    if (isNextPage) {
+      setIsFetchingNextPage(true);
+    } else {
+      setIsLoading(true);
+    }
+    
     try {
-      const { questions, total } = await questionsApi.getAll({
+      const response = await questionsApi.getAll({
         category: selectedCategory !== "all" ? selectedCategory : undefined,
         sort: sortBy,
         search: search.trim() || undefined,
         limit: QUESTIONS_PER_PAGE,
         offset: (page - 1) * QUESTIONS_PER_PAGE,
       });
-      setQuestions(questions);
-      setTotal(total);
+      
+      if (isNextPage) {
+        setQuestions((prev) => [...prev, ...response.questions]);
+      } else {
+        setQuestions(response.questions);
+      }
+      setTotal(response.total);
     } catch (error) {
       console.error("Error fetching questions:", error);
       toast({
@@ -60,13 +73,20 @@ const Dashboard = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsFetchingNextPage(false);
     }
-  };
+  }, [selectedCategory, sortBy, search, page]);
 
   useEffect(() => {
-    fetchQuestions();
+    fetchQuestions(page > 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, sortBy, search, page]);
+  }, [fetchQuestions]);
+
+  useEffect(() => {
+    if (inView && !isLoading && !isFetchingNextPage && questions.length < total) {
+      setPage((prev) => prev + 1);
+    }
+  }, [inView, isLoading, isFetchingNextPage, questions.length, total]);
 
   const handleQuestionCreated = () => {
     setPage(1);
@@ -137,26 +157,12 @@ const Dashboard = () => {
                 {questions.map((question) => (
                   <QuestionCard key={question.id} question={question} />
                 ))}
-                {/* Pagination controls */}
-                {total > QUESTIONS_PER_PAGE && (
-                  <div className="flex justify-center mt-6 gap-2">
-                    <button
-                      className="px-3 py-1 rounded border text-sm bg-card border-border disabled:opacity-50"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                    >
-                      Previous
-                    </button>
-                    <span className="px-2 py-1 text-sm text-muted-foreground">
-                      Page {page} of {Math.ceil(total / QUESTIONS_PER_PAGE)}
-                    </span>
-                    <button
-                      className="px-3 py-1 rounded border text-sm bg-card border-border disabled:opacity-50"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page >= Math.ceil(total / QUESTIONS_PER_PAGE)}
-                    >
-                      Next
-                    </button>
+                {/* Infinite Scroll Observer */}
+                {questions.length < total && (
+                  <div ref={ref} className="py-4 flex justify-center">
+                    {isFetchingNextPage && (
+                      <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    )}
                   </div>
                 )}
 
