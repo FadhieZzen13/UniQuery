@@ -379,7 +379,7 @@ router.post('/answers', authenticate, async (req: AuthRequest, res) => {
     const result = await pool.query(
       `INSERT INTO answers (question_id, author_id, body, is_anonymous)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, question_id, body, is_anonymous, created_at`,
+      RETURNING id, question_id, body, is_anonymous, is_verified, created_at`,
       [questionId, userId, body, isAnonymous]
     );
 
