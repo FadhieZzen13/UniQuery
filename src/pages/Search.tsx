@@ -7,11 +7,9 @@ import Navbar from "@/components/Navbar";
 import TagPill from "@/components/TagPill";
 import VoteCounter from "@/components/VoteCounter";
 import { format } from "date-fns";
-import { useDebounce } from "@/hooks/use-debounce"; // Wait, I need to check if this exists or just build inline. Let's build inline.
 import AskQuestionModal from "@/components/AskQuestionModal";
 import { toast } from "@/hooks/use-toast";
 
-// I'll define an inline debounce to be safe if use-debounce isn't there
 function useDebounceValue<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {

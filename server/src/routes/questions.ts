@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 
     // Build WHERE conditions
     const conditions: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramCount = 1;
     if (category && category !== 'all') {
       conditions.push(`q.category = $${paramCount++}`);

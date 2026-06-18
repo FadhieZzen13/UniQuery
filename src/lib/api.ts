@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = '/api';
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -33,10 +33,18 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    // Network error — server is unreachable
+    throw new Error(
+      'Unable to connect to the server. Please make sure the backend is running (npm run server) and try again.'
+    );
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'An error occurred' }));
