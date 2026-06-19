@@ -14,7 +14,7 @@
                 <p class="tagline">Join Your Campus Community</p>
             </div>
             
-            <form class="auth-form" id="registerForm">
+            <form class="auth-form" id="registerForm" novalidate>
                 <div class="form-group">
                     <label for="fullname">Full Name</label>
                     <input 
@@ -29,12 +29,13 @@
                 <div class="form-group">
                     <label for="email">University Email</label>
                     <input 
-                        type="email" 
+                        type="text"
+                        inputmode="email"
+                        autocomplete="email"
                         id="email" 
                         name="email" 
-                        placeholder="student@university.edu"
+                        placeholder="student@student.university.edu.my"
                         required
-                        pattern=".*@.*\.edu$"
                     >
                     <span class="error-message" id="emailError"></span>
                 </div>

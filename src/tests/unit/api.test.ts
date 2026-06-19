@@ -54,7 +54,7 @@ describe('api client', () => {
       jsonResponse(
         {
           error: 'Invalid request',
-          details: { fieldErrors: { institutionalEmail: ['Email must contain ".edu".'] } },
+          details: { fieldErrors: { institutionalEmail: ['Email must be a valid university address'] } },
         },
         false,
         400
@@ -62,7 +62,7 @@ describe('api client', () => {
     );
 
     await expect(authApi.register('bad@test.com', 'password')).rejects.toThrow(
-      'Email must contain ".edu".'
+      'Email must be a valid university address'
     );
   });
 

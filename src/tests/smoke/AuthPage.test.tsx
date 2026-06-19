@@ -69,9 +69,10 @@ describe('Smoke Test — AuthPage Component', () => {
   it('should render the email input field', () => {
     renderWithProviders(<AuthPage />);
 
-    const emailInput = screen.getByPlaceholderText('your.name@university.edu');
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
     expect(emailInput).toBeInTheDocument();
-    expect(emailInput).toHaveAttribute('type', 'email');
+    expect(emailInput).toHaveAttribute('type', 'text');
+    expect(emailInput).toHaveAttribute('inputMode', 'email');
   });
 
   it('should render the password input field', () => {
@@ -138,7 +139,7 @@ describe('Smoke Test — AuthPage Component', () => {
   it('shows password length validation toast', () => {
     renderWithProviders(<AuthPage />);
 
-    fireEvent.change(screen.getByPlaceholderText('your.name@university.edu'), {
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
       target: { value: 'student@university.edu' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -161,19 +162,28 @@ describe('Smoke Test — AuthPage Component', () => {
     expect(screen.getByText('Login with Student Mail')).toBeInTheDocument();
   });
 
+  it('accepts Malaysian university emails', () => {
+    renderWithProviders(<AuthPage />);
+
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
+    fireEvent.change(emailInput, { target: { value: '218319@student.upm.edu.my' } });
+
+    expect(screen.queryByText(/Please use a valid university email address/)).not.toBeInTheDocument();
+  });
+
   it('shows email validation error for non-edu addresses', () => {
     renderWithProviders(<AuthPage />);
 
-    const emailInput = screen.getByPlaceholderText('your.name@university.edu');
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
     fireEvent.change(emailInput, { target: { value: 'user@gmail.com' } });
 
-    expect(screen.getByText('Please use a .edu email address')).toBeInTheDocument();
+    expect(screen.getByText(/Please use a valid university email address/)).toBeInTheDocument();
   });
 
   it('submits login successfully', async () => {
     renderWithProviders(<AuthPage />);
 
-    fireEvent.change(screen.getByPlaceholderText('your.name@university.edu'), {
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
       target: { value: 'student@university.edu' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -191,7 +201,7 @@ describe('Smoke Test — AuthPage Component', () => {
     renderWithProviders(<AuthPage />);
 
     fireEvent.click(screen.getByText('Register'));
-    fireEvent.change(screen.getByPlaceholderText('your.name@university.edu'), {
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
       target: { value: 'student@university.edu' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {
@@ -209,7 +219,7 @@ describe('Smoke Test — AuthPage Component', () => {
     mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
     renderWithProviders(<AuthPage />);
 
-    fireEvent.change(screen.getByPlaceholderText('your.name@university.edu'), {
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
       target: { value: 'student@university.edu' },
     });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), {

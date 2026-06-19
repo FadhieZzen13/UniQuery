@@ -1,4 +1,13 @@
 // Authentication JavaScript
+const UNIVERSITY_EMAIL_DOMAIN = /\.(edu(\.[a-z]{2})?|ac\.[a-z]{2})$/i
+
+function isUniversityEmail(email) {
+  const normalized = email.trim().toLowerCase()
+  const at = normalized.lastIndexOf("@")
+  if (at < 1) return false
+  return UNIVERSITY_EMAIL_DOMAIN.test(normalized.slice(at + 1))
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm")
   const registerForm = document.getElementById("registerForm")
@@ -17,12 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault()
       clearErrors()
 
-      const email = document.getElementById("email").value
+      const email = document.getElementById("email").value.trim()
       const password = document.getElementById("password").value
 
       // Basic validation
-      if (!email.endsWith(".edu")) {
-        showError("emailError", "Please use a valid university email (.edu)")
+      if (!isUniversityEmail(email)) {
+        showError("emailError", "Please use a valid university email address (e.g. name@university.edu or name@student.university.edu.my)")
         return
       }
 
@@ -62,13 +71,13 @@ document.addEventListener("DOMContentLoaded", () => {
       clearErrors()
 
       const fullname = document.getElementById("fullname").value
-      const email = document.getElementById("email").value
+      const email = document.getElementById("email").value.trim()
       const password = document.getElementById("password").value
       const confirmPassword = document.getElementById("confirmPassword").value
 
       // Validation
-      if (!email.endsWith(".edu")) {
-        showError("emailError", "Please use a valid university email (.edu)")
+      if (!isUniversityEmail(email)) {
+        showError("emailError", "Please use a valid university email address (e.g. name@university.edu or name@student.university.edu.my)")
         return
       }
 

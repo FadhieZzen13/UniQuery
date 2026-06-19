@@ -2,9 +2,9 @@ import express from 'express';
 import { pool } from '../index.js';
 import { supabaseAdmin, supabaseAnon } from '../lib/supabase.js';
 
-const router = express.Router();
+import { isUniversityEmail, UNIVERSITY_EMAIL_ERROR } from '../lib/universityEmail.js';
 
-const hasEduEmail = (email: string) => email.toLowerCase().includes('.edu');
+const router = express.Router();
 
 const ensureUserProfile = async (userId: string, email: string) => {
   const existing = await pool.query(
@@ -34,8 +34,8 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  if (!hasEduEmail(email)) {
-    return res.status(400).json({ error: 'Email must contain ".edu".' });
+  if (!isUniversityEmail(email)) {
+    return res.status(400).json({ error: UNIVERSITY_EMAIL_ERROR });
   }
 
   try {
@@ -94,8 +94,8 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  if (!hasEduEmail(email)) {
-    return res.status(400).json({ error: 'Email must contain ".edu".' });
+  if (!isUniversityEmail(email)) {
+    return res.status(400).json({ error: UNIVERSITY_EMAIL_ERROR });
   }
 
   try {
