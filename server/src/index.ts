@@ -1,10 +1,11 @@
-import dotenv from 'dotenv';
+// Load environment variables before any other import is evaluated.
+// In ESM, imported modules run their top-level code before this file's body,
+// so dotenv must be a side-effect import placed first (several modules read
+// process.env at load time, e.g. services/anonymity.ts).
+import 'dotenv/config';
 import { Pool } from 'pg';
 import { createApp } from './app.js';
 import { startDigestCron } from './services/digest-cron.js';
-
-// Load environment variables
-dotenv.config();
 
 const port = process.env.PORT || 4000;
 
