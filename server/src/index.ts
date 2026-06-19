@@ -3,8 +3,6 @@
 // so dotenv must be a side-effect import placed first (several modules read
 // process.env at load time, e.g. services/anonymity.ts).
 import 'dotenv/config';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import { createApp } from './app.js';
 import { startDigestCron } from './services/digest-cron.js';
@@ -28,11 +26,14 @@ export const pool = new Pool({
 
 // Bootstrap only when run as the server entrypoint. Importing this module from routes
 // (for the exported pool) or from the Vercel serverless handler must not bind a port.
-const isMainModule =
-  typeof process.argv[1] === 'string' &&
-  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+// Avoid import.meta here — Jest compiles tests to CommonJS and cannot parse it.
+function isServerEntrypoint(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return /(?:^|[/\\])index\.(?:ts|js)$/.test(entry);
+}
 
-if (isMainModule && process.env.NODE_ENV !== 'test') {
+if (isServerEntrypoint() && process.env.NODE_ENV !== 'test') {
   pool.query('SELECT NOW()', (err) => {
     if (err) {
       console.error('Database connection error:', err.message);
