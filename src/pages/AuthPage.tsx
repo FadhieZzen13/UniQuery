@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { isUniversityEmail, UNIVERSITY_EMAIL_ERROR } from "@/lib/universityEmail";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -16,13 +17,13 @@ const AuthPage = () => {
   const [emailError, setEmailError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (email: string) => {
-    if (!email) {
+  const validateEmail = (value: string) => {
+    if (!value.trim()) {
       setEmailError("");
       return true;
     }
-    if (!email.toLowerCase().includes(".edu")) {
-      setEmailError("Please use a .edu email address");
+    if (!isUniversityEmail(value)) {
+      setEmailError(UNIVERSITY_EMAIL_ERROR);
       return false;
     }
     setEmailError("");
@@ -32,9 +33,11 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateEmail(email)) return;
+    const trimmedEmail = email.trim();
+
+    if (!validateEmail(trimmedEmail)) return;
     
-    if (!email || !password) {
+    if (!trimmedEmail || !password) {
       toast({
         title: "Missing information",
         description: "Please fill in all fields.",
@@ -56,13 +59,13 @@ const AuthPage = () => {
     
     try {
       if (isLogin) {
-        await login(email, password);
+        await login(trimmedEmail, password);
         toast({
           title: "Welcome back!",
           description: "Redirecting to dashboard...",
         });
       } else {
-        await register(email, password);
+        await register(trimmedEmail, password);
         toast({
           title: "Account created!",
           description: "Let's set up your profile...",
@@ -119,7 +122,7 @@ const AuthPage = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 University Email
@@ -127,13 +130,15 @@ const AuthPage = () => {
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     validateEmail(e.target.value);
                   }}
-                  placeholder="your.name@university.edu"
+                  placeholder="your.name@student.university.edu.my"
                   className={`pl-10 ${emailError ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
               </div>

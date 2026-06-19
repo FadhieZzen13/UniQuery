@@ -47,7 +47,35 @@ describe('v1 auth routes', () => {
         institutionId: INSTITUTION_ID,
       });
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain('.edu');
+    expect(res.body.error).toContain('university');
+  });
+
+  it('accepts .edu.my email on register', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [{
+          id: USER_ID,
+          institution_id: INSTITUTION_ID,
+          institutional_email: '218319@student.upm.edu.my',
+          role: 'STUDENT',
+          full_name: null,
+          display_name: null,
+          created_at: '2026-01-01',
+        }],
+      })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({
+        institutionalEmail: '218319@student.upm.edu.my',
+        password: 'password123',
+        institutionId: INSTITUTION_ID,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.user.email).toBe('218319@student.upm.edu.my');
   });
 
   it('rejects duplicate user registration', async () => {
