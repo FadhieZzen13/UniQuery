@@ -10,17 +10,26 @@ import searchRoutes from './routes/v1-search.js';
 export function createApp(): express.Application {
   const app = express();
 
+  const staticOrigins = [
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'http://localhost:5173',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:8081',
+    'https://uniquery.vercel.app',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ];
+
   app.use(
     cors({
-      origin: [
-        'http://localhost:8080',
-        'http://localhost:8081',
-        'http://localhost:5173',
-        'http://127.0.0.1:8080',
-        'http://127.0.0.1:8081',
-        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-        ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-      ],
+      origin: (origin, callback) => {
+        if (!origin || staticOrigins.includes(origin) || /\.vercel\.app$/i.test(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
     })
   );

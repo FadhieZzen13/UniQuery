@@ -24,9 +24,16 @@ export const pool = new Pool({
   connectionString,
 });
 
-// Bootstrap only when run as the server entrypoint. Importing this module from tests
-// (for the exported pool) must not connect, bind a port, or start the cron.
-if (process.env.NODE_ENV !== 'test') {
+// Bootstrap only when run as the server entrypoint. Importing this module from routes
+// (for the exported pool) or from the Vercel serverless handler must not bind a port.
+// Avoid import.meta here — Jest compiles tests to CommonJS and cannot parse it.
+function isServerEntrypoint(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return /(?:^|[/\\])index\.(?:ts|js)$/.test(entry);
+}
+
+if (isServerEntrypoint() && process.env.NODE_ENV !== 'test') {
   pool.query('SELECT NOW()', (err) => {
     if (err) {
       console.error('Database connection error:', err.message);
