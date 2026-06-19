@@ -40,6 +40,9 @@ module.exports = {
   // Transform all node_modules (MSW v2 and deps are ESM-only)
   transformIgnorePatterns: [],
 
+  // Env must be set before modules that read process.env at load time
+  setupFiles: ['./tests/env.setup.ts'],
+
   // Global test setup — initializes the MSW mock server
   setupFilesAfterEnv: ['./tests/setup.ts'],
 
@@ -53,6 +56,11 @@ module.exports = {
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/**/index.ts',
+    // Legacy routes not mounted by src/app.ts
+    '!src/routes/auth.ts',
+    '!src/routes/answers.ts',
+    '!src/routes/votes.ts',
+    '!src/lib/supabase.ts',
   ],
 
   // NFR Coverage Thresholds (from SDD)

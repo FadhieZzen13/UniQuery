@@ -95,12 +95,18 @@ const VoteCounter = ({ initialVotes, size = "md", questionId, answerId, authorId
 
     setIsLoading(true);
     const value = direction === "up" ? 1 : -1;
+    // The backend enforces one vote per (voter, target) and returns 409 on a repeat,
+    // so toggling/changing a vote means removing the existing one first.
+    const removeExisting = userVote !== null;
+    const isToggleOff = userVote === direction;
 
     try {
       if (questionId) {
-        await votesApi.voteQuestion(questionId, value);
+        if (removeExisting) await votesApi.removeQuestionVote(questionId);
+        if (!isToggleOff) await votesApi.voteQuestion(questionId, value);
       } else if (answerId) {
-        await votesApi.voteAnswer(answerId, value);
+        if (removeExisting) await votesApi.removeAnswerVote(answerId);
+        if (!isToggleOff) await votesApi.voteAnswer(answerId, value);
       }
       // After voting, re-fetch vote status and count
       await fetchVoteStatusAndCount();
