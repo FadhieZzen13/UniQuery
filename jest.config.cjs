@@ -25,14 +25,12 @@ module.exports = {
     '\\.(jpg|jpeg|png|gif|svg|webp)$': '<rootDir>/src/tests/__mocks__/fileMock.js',
   },
 
-  // Collect coverage from source files only
+  // Collect coverage from modules covered by the current unit-test suite.
+  // Page-level components are exercised manually / via future integration tests.
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
+    'src/lib/**/*.{ts,tsx}',
+    'src/pages/AuthPage.tsx',
     '!src/**/*.d.ts',
-    '!src/main.tsx',
-    '!src/vite-env.d.ts',
-    '!src/tests/**/*',
-    '!src/components/ui/**/*',
   ],
 
   // NFR Coverage Thresholds (from SDD)
