@@ -3,6 +3,8 @@
 // so dotenv must be a side-effect import placed first (several modules read
 // process.env at load time, e.g. services/anonymity.ts).
 import 'dotenv/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import { createApp } from './app.js';
 import { startDigestCron } from './services/digest-cron.js';
@@ -24,9 +26,13 @@ export const pool = new Pool({
   connectionString,
 });
 
-// Bootstrap only when run as the server entrypoint. Importing this module from tests
-// (for the exported pool) must not connect, bind a port, or start the cron.
-if (process.env.NODE_ENV !== 'test') {
+// Bootstrap only when run as the server entrypoint. Importing this module from routes
+// (for the exported pool) or from the Vercel serverless handler must not bind a port.
+const isMainModule =
+  typeof process.argv[1] === 'string' &&
+  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+
+if (isMainModule && process.env.NODE_ENV !== 'test') {
   pool.query('SELECT NOW()', (err) => {
     if (err) {
       console.error('Database connection error:', err.message);
