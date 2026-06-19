@@ -14,6 +14,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { notificationsApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+interface NotificationItem {
+  id: string;
+  type: string;
+  read_at?: string | null;
+  payload?: unknown;
+}
+
 interface NavbarProps {
   onMenuClick: () => void;
   isMenuOpen: boolean;
@@ -24,7 +31,7 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
 
   const loadNotifications = async () => {
@@ -89,6 +96,11 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
               placeholder="Search questions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="pl-10 bg-muted/50 border-muted focus:bg-card"
             />
           </div>

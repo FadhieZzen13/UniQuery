@@ -3,6 +3,7 @@ import { MessageCircle, CheckCircle, ShieldCheck } from "lucide-react";
 import VoteCounter from "./VoteCounter";
 import TagPill from "./TagPill";
 import { format } from "date-fns";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 interface QuestionAuthor {
   id?: string;
@@ -64,9 +65,9 @@ const QuestionCard = ({ question }: QuestionCardProps) => {
           </h3>
         </Link>
         
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {question.description}
-        </p>
+        <div className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <MarkdownRenderer content={question.description} previewMode={true} />
+        </div>
         
         <div className="flex flex-wrap gap-1.5 mb-3">
           {question.tags.map((tag) => (

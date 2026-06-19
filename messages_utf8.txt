@@ -1,0 +1,338 @@
+----- USER MESSAGE -----
+<USER_REQUEST>
+Hey gemini i want u to analyse all of this and tell me is there anything wrong 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T15:47:32+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.github\workflows\test.yml (LANGUAGE_YAML)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.github\workflows\test.yml (LANGUAGE_YAML)
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+- c:\Users\Dhafa Alif\UniQuery-1\supabase\migrations\20260529_init.sql (LANGUAGE_UNSPECIFIED)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.5 Flash (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+not those 3. The whole project
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T15:51:13+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+Cursor is on line: 15
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+so im actually a frontend developer for this project and ive been inactive for my team a while because of my health issues and now im back so kinda left behind by others. My group leader sent me a task to do tho
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T15:58:09+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+Cursor is on line: 15
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+This is what my group leader sent:
+Operating Reality
+You are behind Karthik. Compress: this week is Login + Feed; next week is Post Question + Thread + Voting; Week 11 is Search + Moderation + Admin. Use mocks where Karthik's endpoint is not yet live; swap to live within the same sprint. Anonymity Toggle is the most psychologically important UI in the app — make it unmistakable.
+Hard Dependencies
+Karthik's endpoints live on staging — coordinate daily
+Mujahid's Figma master and design tokens
+Samini's staging URL with HTTPS
+Weekly Plan
+Week
+Deliverables
+Evidence at Sprint Review
+9 
+Scaffold React + Vite + TypeScript + Tailwind (if not already) from Mujahid's design tokens
+Login screen working against Karthik's POST /auth/login
+Home Feed consuming GET /questions with infinite scroll
+Anonymity context in auth provider — strip render of identity client-side as defence-in-depth
+Login → Feed flow works on staging
+10
+Post Question form with the visually prominent Anonymity Toggle (teal border + reassurance copy)
+Question Thread view with Markdown + code + math rendering
+Voting buttons wired to POST /votes
+Bookmarks, flag modal
+User can post anonymously and see thread; Sprint 2 demo features
+11
+Search page calling GET /search; debounced 250ms; matched-term highlighting client-side via react-highlight-words
+Empty state per SRS Figure 8
+Faculty Moderation Dashboard (flag queue + decrypt modal with mandatory justification field)
+Admin Dashboard scaffold (5 tabs)
+Search results render within 2s; faculty can decrypt via UI
+12
+Performance optimisation: lazy-load routes, code-splitting, image WebP conversion
+Lighthouse CI: Performance ≥90, Accessibility ≥95 on every PR
+Mobile breakpoints verified at 375 / 768 / 1024
+WCAG audit fixes from Mujahid's review
+Lighthouse report attached to Sprint 4 demo
+13
+UAT hotfixes — same-day for any blocker
+Polish copy and microcopy from UAT observations
+Zero critical UI defects open at end of W13
+14
+Final visual polish for Final Presentation demo
+Drive the live demo segment of the presentation
+Demo runs cleanly during Final Presentation
+Definition of Done — End of Week 14
+All SRS-listed screens implemented at all breakpoints
+Anonymity Toggle visually distinct in both states
+Lighthouse Performance ≥90 and Accessibility ≥95
+Demo runs cleanly during Final Presentation
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T15:58:25+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+Cursor is on line: 15
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+this is actullay week 11 currently haha, please can you analyse this project literally every file and track what am i missing/ or already updated by my teammates
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:02:00+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+Cursor is on line: 15
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+do that again
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:03:08+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+Cursor is on line: 15
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\.vscode\launch.json (LANGUAGE_JSON)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (Low) to Gemini 3.1 Pro (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+okay lets begin each one by one. i want you to start with the anonymity one. can you make it. make sure its consistent with other ui 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:12:59+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\load-tests\README.md (LANGUAGE_MARKDOWN)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\load-tests\README.md (LANGUAGE_MARKDOWN)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.1 Pro (Low) to Claude Opus 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+can you run it for me
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:16:15+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Claude Opus 4.6 (Thinking) to Gemini 3.5 Flash (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+Oh it works! thanks! now can you proceed to Markdown & MathJax rendering 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:22:48+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (Low) to Claude Opus 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+proceed
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:27:00+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+wait have you finished markdown and mathjax?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:29:22+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Claude Opus 4.6 (Thinking) to Gemini 3.1 Pro (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+----- USER MESSAGE -----
+<USER_REQUEST>
+hmm i think there is something wrong, it works only when you viewed (clicked) the question but if youre on the dashboard it doesnt
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:34:23+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+Proceed to moderation adn admin
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:39:39+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+hmm can you analyze from this project? is karthik already built it or others maybe?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:42:51+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+okay then proceed
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:45:00+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+why is it blank? all i see is white
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:48:06+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:50:47+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+it works!
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:53:11+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
+----- USER MESSAGE -----
+<USER_REQUEST>
+can you anaylze all of the code and make sure i dont left behind based from the sprint plan. And what should i do for week 12?
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-16T16:57:36+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Dhafa Alif\UniQuery-1\src\components\AskQuestionModal.tsx (LANGUAGE_TSX)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\api.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\Dhafa Alif\UniQuery-1\src\lib\utils.ts (LANGUAGE_TYPESCRIPT)
+</ADDITIONAL_METADATA>
