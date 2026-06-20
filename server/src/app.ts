@@ -58,14 +58,16 @@ export function createApp(): express.Application {
       SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     };
     let db: { ok: boolean; error?: string } = { ok: false };
+    let conn: { source: string; host: string | null; port: string | null } | null = null;
     try {
-      const { pool } = await import('./index.js');
-      await pool.query('SELECT 1');
+      const mod = await import('./index.js');
+      conn = mod.connectionInfo;
+      await mod.pool.query('SELECT 1');
       db = { ok: true };
     } catch (error) {
       db = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
     }
-    res.status(200).json({ status: 'ok', env, db });
+    res.status(200).json({ status: 'ok', env, db, conn });
   });
 
   // Working API surface: /api/v1/* (auth, Q&A, votes, moderation), /api/users for

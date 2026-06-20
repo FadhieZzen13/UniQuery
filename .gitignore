@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local secrets staged for manual upload to Vercel — never commit
+.env.vercel
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
