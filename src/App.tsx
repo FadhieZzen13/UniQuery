@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import QuestionDetail from "./pages/QuestionDetail";
 import Moderation from "./pages/Moderation";
 import Admin from "./pages/Admin";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -153,6 +154,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Admin />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/search"
+      element={
+        <ProtectedRoute>
+          <Search />
         </ProtectedRoute>
       }
     />

@@ -13,13 +13,12 @@ import notificationsRoutes from './v1-notifications.js';
 import adminRoutes from './v1-admin.js';
 import perfRoutes from './v1-perf.js';
 import usersAdminRoutes from './v1-users.js';
+import { isUniversityEmail, UNIVERSITY_EMAIL_ERROR } from '../lib/universityEmail.js';
 
 const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET;
 const jwtExpiresInHours = 24;
 const bcryptCost = 12;
-
-const hasEduEmail = (email: string) => email.toLowerCase().includes('.edu');
 
 const registerSchema = z.object({
   institutionalEmail: z.string().email(),
@@ -63,8 +62,8 @@ router.post('/auth/register', async (req, res) => {
 
   const { institutionalEmail, password, institutionId, role, fullName, displayName } = parseResult.data;
 
-  if (!hasEduEmail(institutionalEmail)) {
-    return res.status(400).json({ error: 'Email must contain ".edu".' });
+  if (!isUniversityEmail(institutionalEmail)) {
+    return res.status(400).json({ error: UNIVERSITY_EMAIL_ERROR });
   }
 
   try {

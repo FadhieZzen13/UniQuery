@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -33,10 +33,18 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    // Network error — server is unreachable
+    throw new Error(
+      'Unable to connect to the server. Please make sure the backend is running (npm run server) and try again.'
+    );
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'An error occurred' }));
@@ -116,7 +124,7 @@ export const questionsApi = {
     return fetchWithAuth(`/v1/questions/${id}`);
   },
 
-  create: async (data: { title: string; description: string; category: string; tags: string[] }) => {
+  create: async (data: { title: string; description: string; category: string; tags: string[]; isAnonymous?: boolean }) => {
     return fetchWithAuth('/v1/questions', {
       method: 'POST',
       body: JSON.stringify({
@@ -124,6 +132,7 @@ export const questionsApi = {
         body: data.description.trim(),
         category: data.category,
         tags: data.tags,
+        isAnonymous: data.isAnonymous ?? false,
       }),
     });
   },
@@ -137,6 +146,19 @@ export const questionsApi = {
   resolve: async (id: string) => {
     return fetchWithAuth(`/v1/questions/${id}/resolve`, {
       method: 'PATCH',
+    });
+  },
+
+  addBookmark: async (id: string) => {
+    return fetchWithAuth('/v1/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ questionId: id }),
+    });
+  },
+
+  removeBookmark: async (id: string) => {
+    return fetchWithAuth(`/v1/questions/${id}/bookmarks`, {
+      method: 'DELETE',
     });
   },
 };
@@ -240,6 +262,13 @@ export const coursesApi = {
 
 // Moderation API
 export const moderationApi = {
+  createFlag: async (targetType: string, targetId: string) => {
+    return fetchWithAuth('/v1/flags', {
+      method: 'POST',
+      body: JSON.stringify({ targetType, targetId }),
+    });
+  },
+
   getFlags: async (courseId: string) => {
     return fetchWithAuth(`/v1/moderation/flags?course_id=${courseId}`);
   },

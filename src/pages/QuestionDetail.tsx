@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageCircle, Share2, Bookmark, Trash2, CheckCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Share2, Bookmark, Trash2, CheckCircle, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { questionsApi, answersApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,9 @@ import Navbar from "@/components/Navbar";
 import VoteCounter from "@/components/VoteCounter";
 import TagPill from "@/components/TagPill";
 import AnswerCard from "@/components/AnswerCard";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import AskQuestionModal from "@/components/AskQuestionModal";
+import FlagModal from "@/components/FlagModal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +45,8 @@ interface Question {
   answerCount: number;
   createdAt: string;
   isResolved?: boolean;
+  isAnonymous?: boolean;
+  isBookmarked?: boolean;
 }
 
 interface Answer {
@@ -67,6 +71,9 @@ const QuestionDetail = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
+  const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
 
   const fetchQuestionAndAnswers = async () => {
     if (!id) return;
@@ -78,6 +85,7 @@ const QuestionDetail = () => {
         answersApi.getForQuestion(id),
       ]);
       setQuestion(questionData);
+      setIsBookmarked(questionData.isBookmarked ?? false);
       setAnswers(answersData);
     } catch (error) {
       console.error("Error fetching question:", error);
@@ -194,6 +202,31 @@ const QuestionDetail = () => {
     }
   };
 
+  const handleToggleBookmark = async () => {
+    if (!id || isTogglingBookmark) return;
+    
+    setIsTogglingBookmark(true);
+    try {
+      if (isBookmarked) {
+        await questionsApi.removeBookmark(id);
+        setIsBookmarked(false);
+        toast({ title: "Bookmark removed" });
+      } else {
+        await questionsApi.addBookmark(id);
+        setIsBookmarked(true);
+        toast({ title: "Question bookmarked" });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to toggle bookmark",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTogglingBookmark(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -282,9 +315,9 @@ const QuestionDetail = () => {
                 {question.title}
               </h1>
 
-              <p className="text-foreground leading-relaxed mb-4">
-                {question.description}
-              </p>
+              <div className="mb-4">
+                <MarkdownRenderer content={question.description} />
+              </div>
 
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {question.tags.map((tag) => (
@@ -295,14 +328,22 @@ const QuestionDetail = () => {
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <img
-                      src={authorAvatarUrl}
-                      alt={question.author.name || "Anonymous"}
-                      className="w-8 h-8 rounded-full"
-                    />
+                    {question.isAnonymous ? (
+                      // Anonymous: never reach for author identity — render the alias placeholder.
+                      // TODO: thread display_alias through the API and show it here when available.
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <img
+                        src={authorAvatarUrl}
+                        alt={question.author.name || "Anonymous"}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
                     <div>
                       <span className="font-medium text-foreground block">
-                        {question.author.name || "Anonymous"}
+                        {question.isAnonymous ? "Anonymous" : question.author.name || "Anonymous"}
                       </span>
                       <span className="text-xs">
                         Asked on {format(createdAtDate, 'MMM d, yyyy')}
@@ -315,8 +356,24 @@ const QuestionDetail = () => {
                   <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
                     <Share2 className="h-4 w-4" />
                   </button>
-                  <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
-                    <Bookmark className="h-4 w-4" />
+                  <button 
+                    className={`p-2 rounded-lg transition-colors ${
+                      isBookmarked 
+                        ? 'text-primary bg-primary/10 hover:bg-primary/20' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    }`}
+                    onClick={handleToggleBookmark}
+                    disabled={isTogglingBookmark}
+                    title={isBookmarked ? "Remove bookmark" : "Bookmark question"}
+                  >
+                    <Bookmark className="h-4 w-4" fill={isBookmarked ? "currentColor" : "none"} />
+                  </button>
+                  <button 
+                    onClick={() => setIsFlagModalOpen(true)}
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    title="Flag question for moderation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flag"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
                   </button>
                   
                   {/* Author-only actions */}
@@ -428,6 +485,13 @@ const QuestionDetail = () => {
       <AskQuestionModal
         isOpen={isAskModalOpen}
         onClose={() => setIsAskModalOpen(false)}
+      />
+
+      <FlagModal
+        isOpen={isFlagModalOpen}
+        onClose={() => setIsFlagModalOpen(false)}
+        targetType="QUESTION"
+        targetId={question.id}
       />
     </div>
   );

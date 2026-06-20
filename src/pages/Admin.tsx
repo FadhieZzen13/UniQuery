@@ -3,8 +3,10 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminApi } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { Settings, Key, Building, BookOpen, Users } from "lucide-react";
 
 interface Institution {
   id: string;
@@ -234,11 +236,31 @@ const Admin = () => {
 
       <main className="container max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin</h1>
-          <p className="text-sm text-muted-foreground">Manage institutions, courses, and enrollments.</p>
+          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Manage institutions, courses, enrollments, and global configurations.</p>
         </div>
 
-        <Card>
+        <Tabs defaultValue="institutions" className="space-y-6">
+          <TabsList className="bg-muted w-full justify-start overflow-x-auto">
+            <TabsTrigger value="institutions" className="gap-2">
+              <Building className="w-4 h-4" /> Institutions
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="gap-2">
+              <BookOpen className="w-4 h-4" /> Courses
+            </TabsTrigger>
+            <TabsTrigger value="enrollments" className="gap-2">
+              <Users className="w-4 h-4" /> Enrollments
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" /> Settings
+            </TabsTrigger>
+            <TabsTrigger value="apikeys" className="gap-2">
+              <Key className="w-4 h-4" /> API Keys
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="institutions">
+            <Card>
           <CardHeader>
             <CardTitle>Institutions</CardTitle>
           </CardHeader>
@@ -271,10 +293,12 @@ const Admin = () => {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
+        <TabsContent value="courses">
+          <Card>
           <CardHeader>
             <CardTitle>Courses</CardTitle>
           </CardHeader>
@@ -330,10 +354,12 @@ const Admin = () => {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
+        <TabsContent value="enrollments">
+          <Card>
           <CardHeader>
             <CardTitle>Enrollments</CardTitle>
           </CardHeader>
@@ -397,8 +423,40 @@ const Admin = () => {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Global Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-8 text-center text-muted-foreground bg-muted/20 border border-dashed border-border rounded-lg">
+                <Settings className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-foreground">Settings configuration coming soon.</p>
+                <p className="text-sm">This module is scheduled for backend integration.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="apikeys">
+          <Card>
+            <CardHeader>
+              <CardTitle>Developer API Keys</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-8 text-center text-muted-foreground bg-muted/20 border border-dashed border-border rounded-lg">
+                <Key className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-foreground">API Key management coming soon.</p>
+                <p className="text-sm">This module is scheduled for backend integration.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       </main>
     </div>
   );

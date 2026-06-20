@@ -1,0 +1,132 @@
+# UniQuery Backend Validation Test Suite
+
+# Variables
+@baseUrl = http://localhost:3000
+@studentToken = replace_with_student_jwt_after_login
+@facultyToken = replace_with_faculty_jwt_after_login
+
+---
+### 3. Authentication Verification
+---
+
+# POST /auth/login with correct credentials returns a JWT containing sub, role, institution_id, course_enrollments, jti, exp. [cite: 29]
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "correct_password"
+}
+
+###
+
+# Submit 5 wrong passwords for the same account; on 6th attempt assert HTTP 423 with locked_until. [cite: 32]
+# Note: Click "Send Request" 6 times to trigger the gate.
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "lockout_target@example.com",
+  "password": "wrong_password"
+}
+
+###
+
+# POST /auth/logout sets revoked_at = now() on the SESSIONS row. [cite: 33] 
+# Subsequent requests with that JWT return HTTP 401. [cite: 33]
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{studentToken}}
+
+---
+### 4. RBAC Verification
+---
+
+# With a STUDENT JWT, POST /api/v1/moderation/decrypt returns HTTP 403. [cite: 35]
+POST {{baseUrl}}/api/v1/moderation/decrypt
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "target_id": "encrypted_user_id_string"
+}
+
+###
+
+# With a STUDENT JWT, PATCH /api/v1/users/:id returns HTTP 403. [cite: 36]
+PATCH {{baseUrl}}/api/v1/users/123
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Name Change"
+}
+
+###
+
+# With a FACULTY JWT, POST /api/v1/admin/courses/:id/archive returns HTTP 403. [cite: 37]
+POST {{baseUrl}}/api/v1/admin/courses/101/archive
+Authorization: Bearer {{facultyToken}}
+
+---
+### 6. Functional Smoke Tests
+---
+
+# POST /api/v1/questions with valid course_id → HTTP 201; question_id returned. [cite: 45]
+# Note: Also verifies anonymity engine if you query database afterward. [cite: 26, 45]
+POST {{baseUrl}}/api/v1/questions
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "course_id": "valid_course_id",
+  "body": "Is this system truly anonymous?",
+  "is_anonymous": true
+}
+
+###
+
+# POST /api/v1/questions with invalid course_code → HTTP 422. [cite: 46]
+POST {{baseUrl}}/api/v1/questions
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "course_code": "INVALID_CODE",
+  "body": "This request should fail validation."
+}
+
+###
+
+# POST /api/v1/votes twice with same (voter_id, target_id) → HTTP 409 on second. [cite: 47]
+# Note: Click "Send Request" twice.
+POST {{baseUrl}}/api/v1/votes
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "target_id": "question_123",
+  "type": "UPVOTE"
+}
+
+###
+
+# POST /api/v1/answers to a LOCKED question → HTTP 423. [cite: 48]
+POST {{baseUrl}}/api/v1/answers
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "question_id": "locked_question_123",
+  "body": "Trying to answer a locked thread."
+}
+
+###
+
+# PATCH /accept-answer twice on different answers → HTTP 409 on second. [cite: 49]
+PATCH {{baseUrl}}/accept-answer
+Authorization: Bearer {{facultyToken}}
+Content-Type: application/json
+
+{
+  "answer_id": "answer_123"
+}

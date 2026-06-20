@@ -131,6 +131,7 @@ router.get('/questions', authenticate, async (req: AuthRequest, res) => {
       description: row.body,
       category: row.category,
       tags: row.tags || [],
+      isAnonymous: row.is_anonymous,
       author: {
         id: row.is_anonymous ? null : row.author_id,
         name: row.is_anonymous ? 'Anonymous' : row.author_name,
@@ -259,9 +260,11 @@ router.get('/questions/:id', authenticate, async (req: AuthRequest, res) => {
               COALESCE(u.display_name, u.full_name, split_part(u.institutional_email, '@', 1)) as author_name,
               u.reputation as author_reputation,
               COALESCE(SUM(v.value), 0) as votes,
+              MAX(CASE WHEN v.voter_id = $2 THEN v.value ELSE 0 END) as user_vote,
               COUNT(DISTINCT a.id) as answer_count,
               EXISTS(SELECT 1 FROM answers WHERE question_id = q.id AND is_verified = TRUE) as has_verified_answer,
-              ARRAY_AGG(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) as tags
+              ARRAY_AGG(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) as tags,
+              EXISTS(SELECT 1 FROM bookmarks b WHERE b.question_id = q.id AND b.user_id = $2) as is_bookmarked
        FROM questions q
        JOIN users u ON q.author_id = u.id
        LEFT JOIN votes v ON v.target_type = 'QUESTION' AND v.target_id = q.id
@@ -270,7 +273,7 @@ router.get('/questions/:id', authenticate, async (req: AuthRequest, res) => {
        LEFT JOIN tags t ON t.id = qt.tag_id
        WHERE q.id = $1
        GROUP BY q.id, u.id`,
-      [id]
+      [id, req.auth?.userId]
     );
 
     if (result.rows.length === 0) {
@@ -285,11 +288,14 @@ router.get('/questions/:id', authenticate, async (req: AuthRequest, res) => {
       category: row.category,
       tags: row.tags || [],
       status: row.status,
+      isAnonymous: row.is_anonymous,
       createdAt: row.created_at,
       votes: parseInt(row.votes) || 0,
       answerCount: parseInt(row.answer_count) || 0,
       hasVerifiedAnswer: row.has_verified_answer,
       isResolved: row.is_resolved || false,
+      userVote: parseInt(row.user_vote) || 0,
+      isBookmarked: row.is_bookmarked || false,
       author: row.is_anonymous
         ? { id: null, name: 'Anonymous', avatar: null, reputation: 0 }
         : {
@@ -377,7 +383,7 @@ router.post('/answers', authenticate, async (req: AuthRequest, res) => {
     const result = await pool.query(
       `INSERT INTO answers (question_id, author_id, body, is_anonymous)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, question_id, body, is_anonymous, created_at`,
+      RETURNING id, question_id, body, is_anonymous, is_verified, created_at`,
       [questionId, userId, body, isAnonymous]
     );
 
@@ -717,14 +723,14 @@ router.post('/bookmarks', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
-router.delete('/bookmarks/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/questions/:questionId/bookmarks', authenticate, async (req: AuthRequest, res) => {
   const userId = req.auth?.userId;
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    await pool.query('DELETE FROM bookmarks WHERE id = $1 AND user_id = $2', [req.params.id, userId]);
+    await pool.query('DELETE FROM bookmarks WHERE question_id = $1 AND user_id = $2', [req.params.questionId, userId]);
     res.json({ message: 'Bookmark removed' });
   } catch (error) {
     console.error('Error deleting bookmark:', error);

@@ -6,16 +6,18 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // ─── Mock the AuthContext ─────────────────────────────────────────
-// We mock the entire context module to avoid needing a real auth provider
+const mockLogin = jest.fn();
+const mockRegister = jest.fn();
+
 jest.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    login: jest.fn(),
-    register: jest.fn(),
+    login: mockLogin,
+    register: mockRegister,
     isAuthenticated: false,
     isLoading: false,
     user: null,
@@ -25,9 +27,10 @@ jest.mock('@/contexts/AuthContext', () => ({
 }));
 
 // ─── Mock the toast hook ──────────────────────────────────────────
+const mockToast = jest.fn();
 jest.mock('@/hooks/use-toast', () => ({
-  toast: jest.fn(),
-  useToast: () => ({ toast: jest.fn() }),
+  toast: (...args: unknown[]) => mockToast(...args),
+  useToast: () => ({ toast: mockToast }),
 }));
 
 import AuthPage from '@/pages/AuthPage';
@@ -48,6 +51,14 @@ const renderWithProviders = (component: React.ReactElement) => {
 };
 
 describe('Smoke Test — AuthPage Component', () => {
+  beforeEach(() => {
+    mockLogin.mockReset();
+    mockRegister.mockReset();
+    mockToast.mockReset();
+    mockLogin.mockResolvedValue(undefined);
+    mockRegister.mockResolvedValue(undefined);
+  });
+
   it('should render the UniQuery heading', () => {
     renderWithProviders(<AuthPage />);
 
@@ -58,9 +69,10 @@ describe('Smoke Test — AuthPage Component', () => {
   it('should render the email input field', () => {
     renderWithProviders(<AuthPage />);
 
-    const emailInput = screen.getByPlaceholderText('your.name@university.edu');
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
     expect(emailInput).toBeInTheDocument();
-    expect(emailInput).toHaveAttribute('type', 'email');
+    expect(emailInput).toHaveAttribute('type', 'text');
+    expect(emailInput).toHaveAttribute('inputMode', 'email');
   });
 
   it('should render the password input field', () => {
@@ -113,5 +125,112 @@ describe('Smoke Test — AuthPage Component', () => {
     expect(
       screen.getByText('Join thousands of students helping each other succeed.')
     ).toBeInTheDocument();
+  });
+
+  it('shows validation toast when fields are missing', () => {
+    renderWithProviders(<AuthPage />);
+    fireEvent.click(screen.getByText('Login with Student Mail'));
+
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Missing information' })
+    );
+  });
+
+  it('shows password length validation toast', () => {
+    renderWithProviders(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
+      target: { value: 'student@university.edu' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+      target: { value: '12345' },
+    });
+    fireEvent.click(screen.getByText('Login with Student Mail'));
+
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Password too short' })
+    );
+  });
+
+  it('can switch back to login from register', () => {
+    renderWithProviders(<AuthPage />);
+
+    fireEvent.click(screen.getByText('Register'));
+    expect(screen.getByText('Create Account')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Login'));
+    expect(screen.getByText('Login with Student Mail')).toBeInTheDocument();
+  });
+
+  it('accepts Malaysian university emails', () => {
+    renderWithProviders(<AuthPage />);
+
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
+    fireEvent.change(emailInput, { target: { value: '218319@student.upm.edu.my' } });
+
+    expect(screen.queryByText(/Please use a valid university email address/)).not.toBeInTheDocument();
+  });
+
+  it('shows email validation error for non-edu addresses', () => {
+    renderWithProviders(<AuthPage />);
+
+    const emailInput = screen.getByPlaceholderText('your.name@student.university.edu.my');
+    fireEvent.change(emailInput, { target: { value: 'user@gmail.com' } });
+
+    expect(screen.getByText(/Please use a valid university email address/)).toBeInTheDocument();
+  });
+
+  it('submits login successfully', async () => {
+    renderWithProviders(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
+      target: { value: 'student@university.edu' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByText('Login with Student Mail'));
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith('student@university.edu', 'password123');
+    });
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Welcome back!' }));
+  });
+
+  it('submits registration successfully', async () => {
+    renderWithProviders(<AuthPage />);
+
+    fireEvent.click(screen.getByText('Register'));
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
+      target: { value: 'student@university.edu' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByText('Create Account'));
+
+    await waitFor(() => {
+      expect(mockRegister).toHaveBeenCalledWith('student@university.edu', 'password123');
+    });
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Account created!' }));
+  });
+
+  it('shows login failure toast when auth throws', async () => {
+    mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
+    renderWithProviders(<AuthPage />);
+
+    fireEvent.change(screen.getByPlaceholderText('your.name@student.university.edu.my'), {
+      target: { value: 'student@university.edu' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByText('Login with Student Mail'));
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Login failed', description: 'Invalid credentials' })
+      );
+    });
   });
 });

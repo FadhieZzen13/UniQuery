@@ -3,6 +3,9 @@ import VoteCounter from "./VoteCounter";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import MarkdownRenderer from "./MarkdownRenderer";
+import FlagModal from "./FlagModal";
+import { useState } from "react";
 
 interface Author {
   id?: string;
@@ -27,6 +30,8 @@ interface AnswerCardProps {
 }
 
 const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => {
+  const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+
   const createdAtDate =
     typeof answer.createdAt === "string" ? new Date(answer.createdAt) : answer.createdAt;
   const avatarUrl =
@@ -57,8 +62,8 @@ const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => 
           </span>
         )}
 
-        <div className="prose prose-sm max-w-none text-foreground">
-          <p>{answer.content}</p>
+        <div className="prose prose-sm max-w-none">
+          <MarkdownRenderer content={answer.content} />
         </div>
 
         <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
@@ -72,7 +77,14 @@ const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => 
             <span>·</span>
             <span>{answer.author.reputation ?? 0} pts</span>
           </div>
-          <span className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
+            <button 
+              onClick={() => setIsFlagModalOpen(true)}
+              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors mr-1"
+              title="Flag answer for moderation"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flag"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+            </button>
             {isQuestionAuthor && !answer.isVerified && (
               <Button
                 size="sm"
@@ -84,10 +96,19 @@ const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => 
                 Accept
               </Button>
             )}
-            {format(createdAtDate, "MMM d, yyyy")}
-          </span>
+            <span className="text-muted-foreground">
+              {format(createdAtDate, "MMM d, yyyy")}
+            </span>
+          </div>
         </div>
       </div>
+
+      <FlagModal
+        isOpen={isFlagModalOpen}
+        onClose={() => setIsFlagModalOpen(false)}
+        targetType="ANSWER"
+        targetId={answer.id}
+      />
     </article>
   );
 };

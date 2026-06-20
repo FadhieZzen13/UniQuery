@@ -3,8 +3,10 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { moderationApi, coursesApi } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { ShieldAlert, CheckCircle2, FileText } from "lucide-react";
 
 interface Course {
   id: string;
@@ -152,8 +154,8 @@ const Moderation = () => {
       <main className="container max-w-5xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Moderation</h1>
-            <p className="text-sm text-muted-foreground">Review and act on reported content.</p>
+            <h1 className="text-2xl font-bold text-foreground">Moderation Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Review reports, manage resolved flags, and view audit logs.</p>
           </div>
           <div className="flex gap-2 items-center">
             <select
@@ -174,8 +176,22 @@ const Moderation = () => {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
+        <Tabs defaultValue="open" className="space-y-6">
+          <TabsList className="bg-muted w-full justify-start overflow-x-auto">
+            <TabsTrigger value="open" className="gap-2">
+              <ShieldAlert className="w-4 h-4" /> Open Flags
+            </TabsTrigger>
+            <TabsTrigger value="resolved" className="gap-2">
+              <CheckCircle2 className="w-4 h-4" /> Resolved
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2">
+              <FileText className="w-4 h-4" /> Audit Logs
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="open">
+            <Card>
+              <CardHeader>
             <CardTitle>Open Flags</CardTitle>
           </CardHeader>
           <CardContent>
@@ -249,8 +265,40 @@ const Moderation = () => {
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resolved">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resolved Flags</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-8 text-center text-muted-foreground bg-muted/20 border border-dashed border-border rounded-lg">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-3 text-success opacity-50" />
+                <p className="font-medium text-foreground">No resolved flags history available.</p>
+                <p className="text-sm">Historical view of resolved flags is pending backend integration.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle>Decryption Audit Logs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-8 text-center text-muted-foreground bg-muted/20 border border-dashed border-border rounded-lg">
+                <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-foreground">Audit logs not yet available.</p>
+                <p className="text-sm">The moderation audit log feed will be enabled in a future update.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       </main>
     </div>
   );
