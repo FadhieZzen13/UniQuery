@@ -28,8 +28,10 @@ const aliasNouns = [
   'Lynx',
 ];
 
-const tenantSalt = process.env.ANONYMITY_TENANT_SALT || '';
-const masterKeyRaw = process.env.ANONYMITY_MASTER_KEY || '';
+// tenantSalt and masterKey are read lazily (inside functions) so that dotenv has
+// already run before these values are consumed. Reading them at module load time
+// causes a crash in ESM because static imports are resolved before dotenv.config()
+// executes in index.ts.
 
 const decodeKey = (value: string) => {
   if (!value) {
@@ -42,7 +44,8 @@ const decodeKey = (value: string) => {
   return Buffer.from(trimmed, 'base64');
 };
 
-const masterKey = decodeKey(masterKeyRaw);
+const getTenantSalt = () => process.env.ANONYMITY_TENANT_SALT || '';
+const getMasterKey = () => decodeKey(process.env.ANONYMITY_MASTER_KEY || '');
 
 const aesEncrypt = (key: Buffer, plaintext: Buffer) => {
   const iv = crypto.randomBytes(12);
@@ -64,7 +67,7 @@ const aesDecrypt = (key: Buffer, payload: Buffer) => {
 const hashUserId = (userId: string) => {
   return crypto
     .createHash('sha256')
-    .update(`${userId}${tenantSalt}`)
+    .update(`${userId}${getTenantSalt()}`)
     .digest('hex');
 };
 
@@ -96,7 +99,7 @@ export const encryptIdentity = async (
 ) => {
   const dek = crypto.randomBytes(32);
   const encryptedUserId = aesEncrypt(dek, Buffer.from(userId, 'utf8'));
-  const wrappedDek = aesEncrypt(masterKey, dek);
+  const wrappedDek = aesEncrypt(getMasterKey(), dek);
   const dataKeyId = `local:${wrappedDek.toString('base64')}`;
   const hashedUserId = hashUserId(userId);
 
@@ -143,7 +146,7 @@ export const decryptIdentity = async (
   }
 
   const wrappedDek = Buffer.from(dataKeyId.replace('local:', ''), 'base64');
-  const dek = aesDecrypt(masterKey, wrappedDek);
+  const dek = aesDecrypt(getMasterKey(), wrappedDek);
   const decrypted = aesDecrypt(dek, row.encrypted_user_id);
   const userId = decrypted.toString('utf8');
 
