@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import serverless from 'serverless-http';
 
 // The Express app and its whole module chain are loaded lazily inside the handler.
