@@ -22,6 +22,10 @@ const connectionString =
 
 export const pool = new Pool({
   connectionString,
+  // Fail fast instead of hanging the whole serverless invocation (which surfaces as
+  // an opaque 504 FUNCTION_INVOCATION_TIMEOUT). If the DB is unreachable, surface the
+  // real error within a few seconds so /api/healthz can report db.error.
+  connectionTimeoutMillis: 8000,
 });
 
 // Bootstrap only when run as the server entrypoint. Importing this module from routes
