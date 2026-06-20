@@ -43,6 +43,31 @@ export function createApp(): express.Application {
     res.status(200).json({ status: 'ok' });
   });
 
+  // Deployment diagnostic: reports which required env vars are present (booleans
+  // only, never their values) and pings the database. Lets us tell a 500 caused by
+  // missing Vercel config apart from a code/data bug, without exposing secrets.
+  app.get('/api/healthz', async (_req, res) => {
+    const env = {
+      DATABASE_URL: Boolean(process.env.DATABASE_URL),
+      APPLICATION_DATABASE_URL: Boolean(process.env.APPLICATION_DATABASE_URL),
+      JWT_SECRET: Boolean(process.env.JWT_SECRET),
+      ANONYMITY_MASTER_KEY: Boolean(process.env.ANONYMITY_MASTER_KEY),
+      ANONYMITY_TENANT_SALT: Boolean(process.env.ANONYMITY_TENANT_SALT),
+      SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
+      SUPABASE_ANON_KEY: Boolean(process.env.SUPABASE_ANON_KEY),
+      SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    };
+    let db: { ok: boolean; error?: string } = { ok: false };
+    try {
+      const { pool } = await import('./index.js');
+      await pool.query('SELECT 1');
+      db = { ok: true };
+    } catch (error) {
+      db = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
+    }
+    res.status(200).json({ status: 'ok', env, db });
+  });
+
   // Working API surface: /api/v1/* (auth, Q&A, votes, moderation), /api/users for
   // profiles, and /api/v1/search (Karthik's full-text RPC, HTTP-exposed in Task A).
   app.use('/api/users', usersRoutes);
