@@ -82,37 +82,35 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
-              <GraduationCap className="h-7 w-7" />
-            </div>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <GraduationCap className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">UniQuery</h1>
-          <p className="text-muted-foreground mt-1">Your Campus Q&A Community</p>
+          <h1 className="text-xl font-bold text-foreground tracking-tight">UniQuery</h1>
+          <p className="text-muted-foreground text-sm mt-1">Campus Q&A</p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-card rounded-xl shadow-lg border border-border p-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <div className="flex bg-muted rounded-lg p-1 mb-6">
+        <div className="bg-white rounded-lg border border-border p-6">
+          <div className="flex border-b border-border mb-6">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 isLogin
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              Login
+              Sign in
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 !isLogin
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               Register
@@ -190,7 +188,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+        <p className="text-center text-xs text-muted-foreground mt-5">
           Join thousands of students helping each other succeed.
         </p>
       </div>

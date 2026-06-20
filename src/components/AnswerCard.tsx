@@ -27,26 +27,23 @@ interface AnswerCardProps {
 }
 
 const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => {
-  const createdAtDate = typeof answer.createdAt === 'string' 
-    ? new Date(answer.createdAt) 
-    : answer.createdAt;
-  
-  const avatarUrl = answer.author.avatar || 
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${answer.author.name || 'Anonymous'}`;
+  const createdAtDate =
+    typeof answer.createdAt === "string" ? new Date(answer.createdAt) : answer.createdAt;
+  const avatarUrl =
+    answer.author.avatar ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${answer.author.name || "Anonymous"}`;
 
   return (
     <article
       className={cn(
-        "flex gap-4 p-4 bg-card rounded-lg border shadow-sm animate-fade-in",
-        answer.isVerified
-          ? "border-success/30 bg-success/5"
-          : "border-border"
+        "flex gap-4 p-4 rounded-md border bg-white",
+        answer.isVerified ? "border-emerald-200" : "border-border"
       )}
     >
       <div className="flex-shrink-0">
-        <VoteCounter 
-          initialVotes={answer.votes} 
-          size="sm" 
+        <VoteCounter
+          initialVotes={answer.votes}
+          size="sm"
           answerId={answer.id}
           authorId={answer.author.id}
         />
@@ -54,10 +51,10 @@ const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => 
 
       <div className="flex-1 min-w-0">
         {answer.isVerified && (
-          <div className="flex items-center gap-1.5 text-success text-sm font-medium mb-2">
-            <CheckCircle className="h-4 w-4" />
-            Verified Answer
-          </div>
+          <span className="inline-flex items-center gap-1 mb-2 px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <CheckCircle className="h-3 w-3" />
+            Accepted Answer
+          </span>
         )}
 
         <div className="prose prose-sm max-w-none text-foreground">
@@ -69,27 +66,25 @@ const AnswerCard = ({ answer, isQuestionAuthor, onVerify }: AnswerCardProps) => 
             <img
               src={avatarUrl}
               alt={answer.author.name || "Anonymous"}
-              className="w-6 h-6 rounded-full"
+              className="w-5 h-5 rounded-full border border-border"
             />
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="font-medium text-foreground">{answer.author.name || "Anonymous"}</span>
-              <span className="hidden sm:inline">·</span>
-              <span className="text-success font-medium">{answer.author.reputation || 0} pts</span>
-            </div>
+            <span className="font-medium text-foreground/80">{answer.author.name || "Anonymous"}</span>
+            <span>·</span>
+            <span>{answer.author.reputation ?? 0} pts</span>
           </div>
           <span className="ml-auto flex items-center gap-2">
             {isQuestionAuthor && !answer.isVerified && (
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={onVerify}
-                className="text-success hover:text-success hover:bg-success/10"
+                className="h-7 text-xs"
               >
-                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                Mark as Answer
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Accept
               </Button>
             )}
-            {format(createdAtDate, 'MMM d, yyyy')}
+            {format(createdAtDate, "MMM d, yyyy")}
           </span>
         </div>
       </div>

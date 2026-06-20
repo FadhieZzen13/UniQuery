@@ -205,7 +205,7 @@ const QuestionDetail = () => {
         <main className="container max-w-4xl mx-auto px-4 py-6">
           <div className="animate-pulse">
             <div className="h-6 bg-muted rounded w-1/4 mb-4"></div>
-            <div className="bg-card rounded-xl border border-border p-6">
+            <div className="bg-white rounded-md border border-border p-6">
               <div className="h-8 bg-muted rounded w-3/4 mb-4"></div>
               <div className="h-4 bg-muted rounded w-full mb-2"></div>
               <div className="h-4 bg-muted rounded w-2/3"></div>
@@ -256,16 +256,15 @@ const QuestionDetail = () => {
         </Link>
 
         {/* Question */}
-        <article className={`rounded-xl border shadow-sm p-6 animate-fade-in ${
-          question.isResolved 
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700' 
-            : 'bg-card border-border'
+        <article className={`rounded-md border p-6 bg-white ${
+          question.isResolved ? 'border-emerald-200' : 'border-border'
         }`}>
-          {/* Resolved Badge */}
           {question.isResolved && (
-            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-semibold">This question has been resolved</span>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Resolved
+              </span>
             </div>
           )}
           
@@ -328,7 +327,6 @@ const QuestionDetail = () => {
                         size="sm"
                         onClick={handleResolveQuestion}
                         disabled={isResolving}
-                        className={question.isResolved ? "text-orange-600 border-orange-300 hover:bg-orange-50" : "bg-green-600 hover:bg-green-700"}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         {isResolving ? "Updating..." : question.isResolved ? "Reopen" : "Mark Resolved"}
@@ -393,15 +391,15 @@ const QuestionDetail = () => {
 
         {/* Post Answer */}
         {question.isResolved ? (
-          <section className="mt-8 bg-muted/50 rounded-xl border border-border p-6 animate-fade-in">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+          <section className="mt-8 bg-muted/40 rounded-md border border-border p-5">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
               <p>This question has been resolved. New answers are not accepted.</p>
             </div>
           </section>
         ) : (
-          <section className="mt-8 bg-card rounded-xl border border-border shadow-sm p-6 animate-fade-in">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Your Answer</h3>
+          <section className="mt-8 bg-white rounded-md border border-border p-6">
+            <h3 className="text-base font-semibold text-foreground mb-4">Your Answer</h3>
             
             <div className="flex items-start gap-3 mb-4">
               <img

@@ -104,14 +104,14 @@ const Dashboard = () => {
               <div className="flex gap-2 items-center">
                 <input
                   type="text"
-                  className="text-sm border border-border rounded-lg px-3 py-1.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="Search questions..."
+                  className="text-sm border border-border rounded-md px-3 py-1.5 bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50"
+                  placeholder="Search..."
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1); }}
-                  style={{ minWidth: 180 }}
+                  style={{ minWidth: 160 }}
                 />
                 <select
-                  className="text-sm border border-border rounded-lg px-3 py-1.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="text-sm border border-border rounded-md px-2.5 py-1.5 bg-white text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50"
                   value={sortBy}
                   onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
                 >
@@ -125,10 +125,10 @@ const Dashboard = () => {
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse">
-                    <div className="h-5 bg-muted rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-muted rounded w-full mb-2"></div>
-                    <div className="h-4 bg-muted rounded w-2/3"></div>
+                  <div key={i} className="bg-white rounded-md border border-border p-4 animate-pulse">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
+                    <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-2/3"></div>
                   </div>
                 ))}
               </div>
@@ -137,21 +137,20 @@ const Dashboard = () => {
                 {questions.map((question) => (
                   <QuestionCard key={question.id} question={question} />
                 ))}
-                {/* Pagination controls */}
                 {total > QUESTIONS_PER_PAGE && (
                   <div className="flex justify-center mt-6 gap-2">
                     <button
-                      className="px-3 py-1 rounded border text-sm bg-card border-border disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-md border border-border text-xs text-foreground bg-white hover:bg-muted/50 disabled:opacity-40 transition-colors"
                       onClick={() => setPage(page - 1)}
                       disabled={page === 1}
                     >
                       Previous
                     </button>
-                    <span className="px-2 py-1 text-sm text-muted-foreground">
-                      Page {page} of {Math.ceil(total / QUESTIONS_PER_PAGE)}
+                    <span className="px-2 py-1.5 text-xs text-muted-foreground">
+                      {page} / {Math.ceil(total / QUESTIONS_PER_PAGE)}
                     </span>
                     <button
-                      className="px-3 py-1 rounded border text-sm bg-card border-border disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-md border border-border text-xs text-foreground bg-white hover:bg-muted/50 disabled:opacity-40 transition-colors"
                       onClick={() => setPage(page + 1)}
                       disabled={page >= Math.ceil(total / QUESTIONS_PER_PAGE)}
                     >

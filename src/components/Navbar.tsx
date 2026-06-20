@@ -61,65 +61,56 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
   const unreadCount = notifications.filter((item) => !item.read_at).length;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container flex h-16 items-center gap-4 px-4">
-        {/* Mobile menu button */}
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-border">
+      <div className="container flex h-14 items-center gap-4 px-4">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="lg:hidden p-1.5 -ml-1.5 text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Toggle menu"
         >
           {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
-        {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <span className="hidden sm:inline text-lg">UniQuery</span>
+        <Link to="/dashboard" className="flex items-center gap-2 text-primary font-semibold shrink-0">
+          <GraduationCap className="h-[18px] w-[18px]" />
+          <span className="hidden sm:inline text-[15px] tracking-tight">UniQuery</span>
         </Link>
 
-        {/* Search bar */}
-        <div className="flex-1 max-w-xl mx-auto">
+        <div className="flex-1 max-w-sm mx-auto">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
             <Input
               type="search"
               placeholder="Search questions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-muted/50 border-muted focus:bg-card"
+              className="pl-8 h-8 text-sm bg-muted/50 border-transparent focus-visible:border-border focus-visible:bg-white focus-visible:ring-0"
             />
           </div>
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 ml-auto">
           <DropdownMenu onOpenChange={(open) => open && loadNotifications()}>
             <DropdownMenuTrigger asChild>
               <button
-                className="relative flex items-center justify-center w-9 h-9 rounded-full border border-border hover:bg-muted/50"
+                className="relative p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
                 aria-label="Notifications"
               >
-                <Bell className="h-4 w-4 text-muted-foreground" />
+                <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-destructive text-destructive-foreground rounded-full px-1">
-                    {unreadCount}
-                  </span>
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full" />
                 )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 max-h-[60vh] overflow-auto">
-              <div className="px-2 py-1.5">
+              <div className="px-3 py-2 border-b border-border">
                 <p className="text-sm font-medium">Notifications</p>
                 <p className="text-xs text-muted-foreground">
                   {notifLoading ? "Loading..." : `${notifications.length} total`}
                 </p>
               </div>
-              <DropdownMenuSeparator />
               {!notifLoading && notifications.length === 0 && (
-                <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+                <div className="px-3 py-8 text-center text-xs text-muted-foreground">
                   No notifications yet
                 </div>
               )}
@@ -127,9 +118,12 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
                 <DropdownMenuItem
                   key={item.id}
                   onClick={() => handleMarkRead(item.id)}
-                  className={cn("flex flex-col items-start gap-1", !item.read_at && "bg-muted/40")}
+                  className={cn(
+                    "flex flex-col items-start gap-0.5 px-3 py-2.5 cursor-pointer",
+                    !item.read_at && "bg-accent/30"
+                  )}
                 >
-                  <span className="text-xs font-semibold text-foreground">{item.type}</span>
+                  <span className="text-xs font-medium text-foreground">{item.type}</span>
                   <span className="text-[11px] text-muted-foreground">
                     {item.payload ? JSON.stringify(item.payload) : ""}
                   </span>
@@ -141,42 +135,44 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
           <Button
             onClick={onAskQuestion}
             size="sm"
-            className="hidden sm:flex gap-1.5"
+            className="hidden sm:flex h-8 text-xs gap-1 px-3"
           >
-            <Plus className="h-4 w-4" />
-            Ask Question
+            <Plus className="h-3.5 w-3.5" />
+            Ask
           </Button>
-          <Button
+          <button
             onClick={onAskQuestion}
-            size="icon"
-            className="sm:hidden"
+            className="sm:hidden p-1.5 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
             aria-label="Ask Question"
           >
             <Plus className="h-4 w-4" />
-          </Button>
+          </button>
 
-          {/* User avatar with dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 focus:outline-none">
-                <div className="hidden sm:flex flex-col items-end text-xs">
-                  <span className="font-medium text-foreground">{displayName.split(' ')[0]}</span>
-                  <span className="text-success font-semibold">{user?.reputation || 0} pts</span>
+              <button className="flex items-center gap-2 focus:outline-none ml-1 rounded-md p-1 hover:bg-muted/50 transition-colors">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-medium text-foreground leading-none">
+                    {displayName.split(" ")[0]}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                    {user?.reputation ?? 0} pts
+                  </span>
                 </div>
                 <img
                   src={avatarUrl}
                   alt={displayName}
-                  className="w-9 h-9 rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
+                  className="w-7 h-7 rounded-full border border-border bg-muted"
                 />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{displayName}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <DropdownMenuContent align="end" className="w-52">
+              <div className="px-3 py-2">
+                <p className="text-sm font-medium text-foreground">{displayName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{user?.email}</p>
                 {user?.major && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {user.major} • {user.year}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {user.major}{user.year ? ` · ${user.year}` : ""}
                   </p>
                 )}
               </div>
@@ -184,9 +180,12 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
               <DropdownMenuItem onClick={() => navigate("/moderation")}>Moderation</DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/admin")}>Admin</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-destructive focus:text-destructive focus:bg-destructive/5"
+              >
+                <LogOut className="mr-2 h-3.5 w-3.5" />
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

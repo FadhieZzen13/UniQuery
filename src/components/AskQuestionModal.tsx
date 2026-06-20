@@ -100,9 +100,9 @@ const AskQuestionModal = ({ isOpen, onClose, onQuestionCreated }: AskQuestionMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/20" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-card rounded-xl shadow-xl border border-border animate-fade-in">
+      <div className="relative w-full max-w-lg bg-white rounded-lg border border-border shadow-md">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Ask a Question</h2>
           <button
