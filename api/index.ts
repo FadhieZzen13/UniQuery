@@ -1,29 +1,40 @@
-import serverless from 'serverless-http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
-// The Express app and its whole module chain are loaded lazily inside the handler.
-// If any module throws at load time (missing dependency, bad env, import cycle),
-// we catch it and return the real message instead of an opaque
-// FUNCTION_INVOCATION_FAILED, so the cause is visible without Vercel log access.
-let cachedHandler: ReturnType<typeof serverless> | null = null;
-let initError: Error | null = null;
+// Vercel invokes this file as a Node (req, res) function. An Express application is
+// itself a (req, res) handler, so the request is handed straight to it.
+//
+// We deliberately do NOT use serverless-http here. That adapter targets AWS Lambda's
+// (event, context) calling convention: when Vercel calls the export as (req, res),
+// serverless-http treats Vercel's real `res` as the Lambda "context" and writes the
+// response to an internal object instead. Vercel's `res` is never ended, so every
+// request — even ones that don't touch the database — hangs until maxDuration (30s)
+// and returns 504 FUNCTION_INVOCATION_TIMEOUT. Passing (req, res) to Express directly
+// is the supported Vercel pattern and lets Express end the response itself.
+//
+// The app and its whole module chain are imported lazily so a load-time failure
+// (missing dependency, bad env, import cycle) surfaces as a real 500 JSON body
+// instead of an opaque FUNCTION_INVOCATION_FAILED.
+type NodeHandler = (req: IncomingMessage, res: ServerResponse) => void;
 
-async function getHandler() {
-  if (cachedHandler) return cachedHandler;
-  if (initError) throw initError;
-  try {
-    const { createApp } = await import('../server/src/app.js');
-    cachedHandler = serverless(createApp());
-    return cachedHandler;
-  } catch (error) {
-    initError = error instanceof Error ? error : new Error(String(error));
-    throw initError;
+let appPromise: Promise<NodeHandler> | null = null;
+
+async function getApp(): Promise<NodeHandler> {
+  if (!appPromise) {
+    appPromise = import('../server/src/app.js')
+      .then((mod) => mod.createApp() as unknown as NodeHandler)
+      .catch((error) => {
+        // Don't cache the rejection — let a later invocation retry the import.
+        appPromise = null;
+        throw error instanceof Error ? error : new Error(String(error));
+      });
   }
+  return appPromise;
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
-    const h = await getHandler();
-    return h(req, res);
+    const app = await getApp();
+    app(req, res);
   } catch (error: any) {
     res.statusCode = 500;
     res.setHeader('content-type', 'application/json');
