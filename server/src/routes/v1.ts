@@ -20,6 +20,15 @@ const jwtSecret = process.env.JWT_SECRET;
 const jwtExpiresInHours = 24;
 const bcryptCost = 12;
 
+// Comma-separated list of emails that are auto-promoted to ADMIN on registration.
+// Set ADMIN_SEED_EMAILS in your environment (e.g. "you@uni.edu,other@uni.edu").
+const adminSeedEmails = new Set(
+  (process.env.ADMIN_SEED_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+
 const registerSchema = z.object({
   institutionalEmail: z.string().email(),
   password: z.string().min(6),
@@ -60,7 +69,14 @@ router.post('/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Invalid request', details: parseResult.error.flatten() });
   }
 
-  const { institutionalEmail, password, institutionId, role, fullName, displayName } = parseResult.data;
+  const { institutionalEmail, password, institutionId, fullName, displayName } = parseResult.data;
+
+  // Determine effective role: seed list wins; nobody else can self-assign ADMIN.
+  const effectiveRole = adminSeedEmails.has(institutionalEmail.toLowerCase())
+    ? 'ADMIN'
+    : parseResult.data.role === 'ADMIN'
+      ? 'STUDENT'
+      : parseResult.data.role;
 
   if (!isUniversityEmail(institutionalEmail)) {
     return res.status(400).json({ error: UNIVERSITY_EMAIL_ERROR });
@@ -81,7 +97,7 @@ router.post('/auth/register', async (req, res) => {
       `INSERT INTO users (institution_id, institutional_email, password_hash, role, full_name, display_name)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, institution_id, institutional_email, role, full_name, display_name, created_at`,
-      [institutionId, institutionalEmail, passwordHash, role, fullName || null, displayName || null]
+      [institutionId, institutionalEmail, passwordHash, effectiveRole, fullName || null, displayName || null]
     );
 
     const user = result.rows[0];
