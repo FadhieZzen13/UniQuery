@@ -273,7 +273,7 @@ export const moderationApi = {
     return fetchWithAuth(`/v1/moderation/flags?course_id=${courseId}`);
   },
 
-  act: async (data: { targetType: 'QUESTION' | 'ANSWER'; targetId: string; action: 'HIDE' | 'LOCK' | 'DELETE' | 'UNHIDE'; justification: string }) => {
+  act: async (data: { targetType: 'QUESTION' | 'ANSWER'; targetId: string; action: 'HIDE' | 'LOCK' | 'DELETE' | 'UNHIDE' | 'DISMISS'; justification: string }) => {
     return fetchWithAuth('/v1/moderation/actions', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -301,15 +301,21 @@ export const adminApi = {
     });
   },
 
-  listCourses: async (institutionId: string) => {
-    return fetchWithAuth(`/v1/admin/courses?institution_id=${institutionId}`);
+  // institutionId is optional: the server defaults to the admin's own institution.
+  listCourses: async (institutionId?: string) => {
+    return fetchWithAuth(`/v1/admin/courses${institutionId ? `?institution_id=${institutionId}` : ''}`);
   },
 
-  createCourse: async (data: { institutionId: string; code: string; title: string; facultyId?: string }) => {
+  createCourse: async (data: { institutionId?: string; code: string; title: string; facultyId?: string }) => {
     return fetchWithAuth('/v1/admin/courses', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  // Every open flag across all courses in the admin's institution.
+  listAllFlags: async () => {
+    return fetchWithAuth('/v1/moderation/flags/all');
   },
 
   listEnrollments: async (courseId: string) => {

@@ -11,7 +11,9 @@ const institutionSchema = z.object({
 });
 
 const courseSchema = z.object({
-  institutionId: z.string().uuid(),
+  // Optional: single-institution deployments let the server fill this from the
+  // admin's own institution so the UI never has to pick one.
+  institutionId: z.string().uuid().optional(),
   code: z.string().min(2),
   title: z.string().min(2),
   facultyId: z.string().uuid().optional(),
@@ -59,7 +61,8 @@ router.post('/institutions', authenticate, requireRole('ADMIN'), async (req: Aut
 });
 
 router.get('/courses', authenticate, requireRole('ADMIN'), async (req: AuthRequest, res) => {
-  const institutionId = req.query.institution_id as string | undefined;
+  // Default to the admin's own institution when not explicitly provided.
+  const institutionId = (req.query.institution_id as string | undefined) || req.auth?.institutionId;
   if (!institutionId) {
     return res.status(400).json({ error: 'institution_id is required' });
   }
@@ -85,7 +88,11 @@ router.post('/courses', authenticate, requireRole('ADMIN'), async (req: AuthRequ
     return res.status(400).json({ error: 'Invalid request', details: parseResult.error.flatten() });
   }
 
-  const { institutionId, facultyId, code, title } = parseResult.data;
+  const { facultyId, code, title } = parseResult.data;
+  const institutionId = parseResult.data.institutionId || req.auth?.institutionId;
+  if (!institutionId) {
+    return res.status(400).json({ error: 'institution_id is required' });
+  }
 
   try {
     const result = await pool.query(

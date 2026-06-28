@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi, usersApi } from '@/lib/api';
 
+export type UserRole = 'STUDENT' | 'FACULTY' | 'ADMIN';
+
 export interface User {
   id: string;
   email: string;
@@ -9,6 +11,7 @@ export interface User {
   year: string | null;
   avatar: string | null;
   reputation: number;
+  role: UserRole;
   onboardingCompleted: boolean;
   needsCourseEnrollment?: boolean;
   createdAt: string;
@@ -46,8 +49,12 @@ const defaultUserFields = {
   year: null,
   avatar: null,
   reputation: 0,
+  role: 'STUDENT' as UserRole,
   createdAt: new Date().toISOString(),
 };
+
+const normalizeRole = (value: unknown): UserRole =>
+  value === 'ADMIN' || value === 'FACULTY' ? value : 'STUDENT';
 
 const normalizeAuthUser = (apiUser: Record<string, unknown>): User => ({
   id: String(apiUser.id),
@@ -57,6 +64,7 @@ const normalizeAuthUser = (apiUser: Record<string, unknown>): User => ({
   year: (apiUser.year as string | null) ?? null,
   avatar: (apiUser.avatar as string | null) ?? null,
   reputation: Number(apiUser.reputation ?? 0),
+  role: normalizeRole(apiUser.role),
   onboardingCompleted: Boolean(apiUser.onboardingCompleted),
   needsCourseEnrollment: Boolean(apiUser.needsCourseEnrollment),
   createdAt: String(apiUser.createdAt ?? new Date().toISOString()),

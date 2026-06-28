@@ -34,9 +34,9 @@ const Moderation = () => {
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [flags, setFlags] = useState<FlagItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [actions, setActions] = useState<Record<string, string>>({});
   const [justifications, setJustifications] = useState<Record<string, string>>({});
   const [revealedUsers, setRevealedUsers] = useState<Record<string, string>>({});
+  const [submittingFlagId, setSubmittingFlagId] = useState<string | null>(null);
 
   const courseOptions = useMemo(() => courses.filter((c) => c.status !== "ARCHIVED"), [courses]);
 
@@ -86,46 +86,45 @@ const Moderation = () => {
     }
   }, [selectedCourseId]);
 
-  const handleAction = async (flag: FlagItem) => {
-    const action = actions[flag.id] as "HIDE" | "LOCK" | "DELETE" | "UNHIDE" | undefined;
+  // Approve = take the content down (HIDE → status HIDDEN). Reject = dismiss the
+  // report (DISMISS → flag resolved, content untouched). Both record an audit entry,
+  // so a justification is required either way.
+  const handleResolve = async (flag: FlagItem, decision: "APPROVE" | "REJECT") => {
     const justification = (justifications[flag.id] || "").trim();
-
-    if (!action) {
-      toast({
-        title: "Missing action",
-        description: "Select an action before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (justification.length < 10) {
       toast({
         title: "Justification required",
-        description: "Please provide at least 10 characters.",
+        description: "Please provide at least 10 characters before resolving.",
         variant: "destructive",
       });
       return;
     }
 
+    setSubmittingFlagId(flag.id);
     try {
       await moderationApi.act({
         targetType: flag.target_type,
         targetId: flag.target_id,
-        action,
+        action: decision === "APPROVE" ? "HIDE" : "DISMISS",
         justification,
       });
       toast({
-        title: "Moderation updated",
-        description: "Action recorded and flag resolved.",
+        title: decision === "APPROVE" ? "Content taken down" : "Flag rejected",
+        description:
+          decision === "APPROVE"
+            ? "The reported content has been hidden and the flag resolved."
+            : "The report was dismissed and the content left in place.",
       });
       await loadFlags(selectedCourseId);
     } catch (error) {
       toast({
         title: "Action failed",
-        description: error instanceof Error ? error.message : "Failed to apply moderation action",
+        description: error instanceof Error ? error.message : "Failed to resolve flag",
         variant: "destructive",
       });
+    } finally {
+      setSubmittingFlagId(null);
     }
   };
 
@@ -235,30 +234,30 @@ const Moderation = () => {
                         <p className="text-xs text-primary mt-2">User ID: {revealedUsers[flag.id]}</p>
                       )}
 
-                      <div className="mt-4 grid gap-3 sm:grid-cols-[140px_1fr_auto] items-start">
-                        <select
-                          className="text-sm border border-border rounded-lg px-3 py-2 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          value={actions[flag.id] || ""}
-                          onChange={(e) =>
-                            setActions((prev) => ({ ...prev, [flag.id]: e.target.value }))
-                          }
-                        >
-                          <option value="">Select action</option>
-                          <option value="HIDE">Hide</option>
-                          <option value="LOCK">Lock</option>
-                          <option value="DELETE">Delete</option>
-                          <option value="UNHIDE">Unhide</option>
-                        </select>
+                      <div className="mt-4 space-y-3">
                         <Input
-                          placeholder="Justification (min 10 chars)"
+                          placeholder="Justification (min 10 chars) — recorded in the audit log"
                           value={justifications[flag.id] || ""}
                           onChange={(e) =>
                             setJustifications((prev) => ({ ...prev, [flag.id]: e.target.value }))
                           }
                         />
-                        <Button onClick={() => handleAction(flag)}>
-                          Apply
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="destructive"
+                            disabled={submittingFlagId === flag.id}
+                            onClick={() => handleResolve(flag, "APPROVE")}
+                          >
+                            Approve &amp; Take Down
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={submittingFlagId === flag.id}
+                            onClick={() => handleResolve(flag, "REJECT")}
+                          >
+                            Reject Flag
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );

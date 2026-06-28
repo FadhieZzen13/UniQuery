@@ -39,6 +39,40 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Role-gated route - authenticated + onboarded users whose role is allowed.
+// Students hitting an admin/moderation URL are bounced to their dashboard.
+const RoleRoute = ({
+  allowedRoles,
+  children,
+}: {
+  allowedRoles: Array<"ADMIN" | "FACULTY" | "STUDENT">;
+  children: React.ReactNode;
+}) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (user && (!user.onboardingCompleted || user.needsCourseEnrollment)) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 // Onboarding route - requires auth but not completed onboarding
 const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -144,17 +178,17 @@ const AppRoutes = () => (
     <Route
       path="/moderation"
       element={
-        <ProtectedRoute>
+        <RoleRoute allowedRoles={["FACULTY", "ADMIN"]}>
           <Moderation />
-        </ProtectedRoute>
+        </RoleRoute>
       }
     />
     <Route
       path="/admin"
       element={
-        <ProtectedRoute>
+        <RoleRoute allowedRoles={["ADMIN"]}>
           <Admin />
-        </ProtectedRoute>
+        </RoleRoute>
       }
     />
     <Route

@@ -24,6 +24,7 @@ const mapUserRow = (
     full_name: string | null;
     display_name: string | null;
     reputation: number | null;
+    role?: string | null;
     created_at: string;
   },
   hasEnrollment = false
@@ -41,6 +42,8 @@ const mapUserRow = (
       ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`
       : null,
     reputation: row.reputation ?? 0,
+    // Carried to the client so the UI can gate admin/moderation surfaces by role.
+    role: row.role ?? 'STUDENT',
     onboardingCompleted,
     needsCourseEnrollment: onboardingCompleted && !hasEnrollment,
     createdAt: row.created_at,
@@ -64,7 +67,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, institutional_email, full_name, display_name, reputation, created_at
+      `SELECT id, institutional_email, full_name, display_name, reputation, role, created_at
        FROM users WHERE id = $1`,
       [userId]
     );
@@ -129,12 +132,12 @@ router.post('/onboarding', authenticate, async (req: AuthRequest, res) => {
         `UPDATE users
          SET full_name = $1, display_name = $2, updated_at = now()
          WHERE id = $3
-         RETURNING id, institutional_email, full_name, display_name, reputation, created_at`,
+         RETURNING id, institutional_email, full_name, display_name, reputation, role, created_at`,
         [name, formatDisplayMeta(major, year), userId]
       );
     } else {
       result = await pool.query(
-        `SELECT id, institutional_email, full_name, display_name, reputation, created_at
+        `SELECT id, institutional_email, full_name, display_name, reputation, role, created_at
          FROM users WHERE id = $1`,
         [userId]
       );
@@ -189,7 +192,7 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
       `UPDATE users
        SET full_name = $1, display_name = $2, updated_at = now()
        WHERE id = $3
-       RETURNING id, institutional_email, full_name, display_name, reputation, created_at`,
+       RETURNING id, institutional_email, full_name, display_name, reputation, role, created_at`,
       [nextName, formatDisplayMeta(nextMajor, nextYear), userId]
     );
 

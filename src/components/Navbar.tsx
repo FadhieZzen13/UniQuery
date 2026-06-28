@@ -66,6 +66,8 @@ const Navbar = ({ onMenuClick, isMenuOpen, onAskQuestion }: NavbarProps) => {
   const displayName = user?.name || user?.email?.split("@")[0] || "User";
   const avatarUrl = user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
   const unreadCount = notifications.filter((item) => !item.read_at).length;
+  const isAdmin = user?.role === "ADMIN";
+  const canModerate = user?.role === "ADMIN" || user?.role === "FACULTY";
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-border">
@@ -188,9 +190,13 @@ onKeyDown={(e) => {
                   </p>
                 )}
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/moderation")}>Moderation</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/admin")}>Admin</DropdownMenuItem>
+              {(canModerate || isAdmin) && <DropdownMenuSeparator />}
+              {canModerate && (
+                <DropdownMenuItem onClick={() => navigate("/moderation")}>Moderation</DropdownMenuItem>
+              )}
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => navigate("/admin")}>Admin</DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}

@@ -13,49 +13,61 @@ interface VoteCounterProps {
   authorId?: string;
 }
 
+type Vote = "up" | "down" | null;
+
+const deltaOf = (vote: Vote) => (vote === "up" ? 1 : vote === "down" ? -1 : 0);
+
 const VoteCounter = ({ initialVotes, size = "md", questionId, answerId, authorId }: VoteCounterProps) => {
   const { user, isAuthenticated } = useAuth();
-  const [votes, setVotes] = useState(initialVotes);
-  const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
+  // Single source of truth: `baseVotes` is the score WITHOUT the current user's own
+  // vote, and `userVote` is that vote. The number we render is always
+  // baseVotes + deltaOf(userVote), so switching down -> up can never leave a stale
+  // negative on screen the way refetching only the highlight did before.
+  const [baseVotes, setBaseVotes] = useState(initialVotes);
+  const [userVote, setUserVote] = useState<Vote>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if the current user is the author of this content
-  const isOwnContent = user && authorId && user.id === authorId;
+  const isOwnContent = Boolean(user && authorId && user.id === authorId);
+  const displayedVotes = baseVotes + deltaOf(userVote);
 
-  // Fetch user's existing vote and vote count
-  const fetchVoteStatusAndCount = async () => {
-    if (!isAuthenticated) return;
-    try {
-      if (questionId) {
-        const status = await votesApi.getQuestionVoteStatus(questionId);
-        if (status.value === 1) setUserVote("up");
-        else if (status.value === -1) setUserVote("down");
-        else setUserVote(null);
-        // Fetch latest vote count from question API
-        const q = await import("@/lib/api").then(m => m.questionsApi.getById(questionId));
-        setVotes(q.votes);
-      } else if (answerId) {
-        const status = await votesApi.getAnswerVoteStatus(answerId);
-        if (status.value === 1) setUserVote("up");
-        else if (status.value === -1) setUserVote("down");
-        else setUserVote(null);
-        // No direct answer vote count API, so just update local state
-      }
-    } catch (error) {
-      // Silently fail
-      console.error("Failed to fetch vote status/count:", error);
-    }
-  };
-
+  // On mount (and when the target changes), learn the user's existing vote so we can
+  // back it out of the incoming total. `initialVotes` includes the user's own vote,
+  // so baseVotes = initialVotes - (their vote).
   useEffect(() => {
-    fetchVoteStatusAndCount();
+    let cancelled = false;
+
+    const sync = async () => {
+      if ((!questionId && !answerId) || !isAuthenticated) {
+        setUserVote(null);
+        setBaseVotes(initialVotes);
+        return;
+      }
+      try {
+        const status = questionId
+          ? await votesApi.getQuestionVoteStatus(questionId)
+          : await votesApi.getAnswerVoteStatus(answerId as string);
+        if (cancelled) return;
+        const value: number = status.value ?? 0;
+        setUserVote(value === 1 ? "up" : value === -1 ? "down" : null);
+        setBaseVotes(initialVotes - value);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to fetch vote status:", error);
+        setUserVote(null);
+        setBaseVotes(initialVotes);
+      }
+    };
+
+    sync();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionId, answerId, isAuthenticated]);
+  }, [questionId, answerId, isAuthenticated, initialVotes]);
 
   const handleVote = async (direction: "up" | "down") => {
     if (isLoading) return;
-    
-    // Prevent voting on own content
+
     if (isOwnContent) {
       toast({
         title: "Cannot vote",
@@ -64,53 +76,32 @@ const VoteCounter = ({ initialVotes, size = "md", questionId, answerId, authorId
       });
       return;
     }
-    
-    // If no questionId or answerId, just update locally (for display purposes)
-    if (!questionId && !answerId) {
-      if (direction === "up") {
-        if (userVote === "up") {
-          setVotes(votes - 1);
-          setUserVote(null);
-        } else if (userVote === "down") {
-          setVotes(votes + 2);
-          setUserVote("up");
-        } else {
-          setVotes(votes + 1);
-          setUserVote("up");
-        }
-      } else {
-        if (userVote === "down") {
-          setVotes(votes + 1);
-          setUserVote(null);
-        } else if (userVote === "up") {
-          setVotes(votes - 2);
-          setUserVote("down");
-        } else {
-          setVotes(votes - 1);
-          setUserVote("down");
-        }
-      }
-      return;
-    }
+
+    const prevVote = userVote;
+    // Clicking the active direction toggles it off; otherwise switch to it.
+    const nextVote: Vote = direction === prevVote ? null : direction;
+
+    // Optimistic update — the rendered count follows baseVotes + deltaOf(nextVote).
+    setUserVote(nextVote);
+
+    // No target id (e.g. the dashboard feed): purely cosmetic, nothing to persist.
+    if ((!questionId && !answerId) || !isAuthenticated) return;
 
     setIsLoading(true);
-    const value = direction === "up" ? 1 : -1;
-    // The backend enforces one vote per (voter, target) and returns 409 on a repeat,
-    // so toggling/changing a vote means removing the existing one first.
-    const removeExisting = userVote !== null;
-    const isToggleOff = userVote === direction;
-
+    const value = nextVote === "up" ? 1 : -1;
     try {
       if (questionId) {
-        if (removeExisting) await votesApi.removeQuestionVote(questionId);
-        if (!isToggleOff) await votesApi.voteQuestion(questionId, value);
+        // The backend enforces one vote per (voter, target), so changing a vote means
+        // removing the existing one first.
+        if (prevVote !== null) await votesApi.removeQuestionVote(questionId);
+        if (nextVote !== null) await votesApi.voteQuestion(questionId, value);
       } else if (answerId) {
-        if (removeExisting) await votesApi.removeAnswerVote(answerId);
-        if (!isToggleOff) await votesApi.voteAnswer(answerId, value);
+        if (prevVote !== null) await votesApi.removeAnswerVote(answerId);
+        if (nextVote !== null) await votesApi.voteAnswer(answerId, value);
       }
-      // After voting, re-fetch vote status and count
-      await fetchVoteStatusAndCount();
     } catch (error) {
+      // Roll back to what the server still believes.
+      setUserVote(prevVote);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to vote",
@@ -142,7 +133,7 @@ const VoteCounter = ({ initialVotes, size = "md", questionId, answerId, authorId
         <ChevronUp className={iconSize} />
       </button>
       <span className={cn("font-semibold text-foreground", textSize)}>
-        {votes}
+        {displayedVotes}
       </span>
       <button
         onClick={() => handleVote("down")}
